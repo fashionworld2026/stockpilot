@@ -146,13 +146,15 @@ async function uploadPhoto(file,id){
 }
 async function saveProduct(e){
   e.preventDefault();if(!session){toast("Sign in to save inventory.",true);openAuthModal("login");return;}
+  const wasEditing=!!editingId;
   const id=editingId||crypto.randomUUID();
+  const existing=wasEditing?products.find(x=>x.id===id):null;
   const payload={user_id:session.user.id,item_name:$("itemName").value.trim(),category:$("category").value.trim(),location:$("location").value.trim(),quantity:Number($("quantity").value)||0,min_stock:Number($("minStock").value)||0,purchase_price:Number($("purchasePrice").value)||0,selling_price:Number($("sellingPrice").value)||0,updated_at:new Date().toISOString()};
   try{
     if($("productPhoto").files[0])payload.image_path=await uploadPhoto($("productPhoto").files[0],id);
-    if(editingId){const old=products.find(x=>x.id===id);const {error}=await db.from("products").update(payload).eq("id",id);if(error)throw error;if(old?.image_path&&payload.image_path&&old.image_path!==payload.image_path)await db.storage.from("product-images").remove([old.image_path])}
+    if(wasEditing){const {error}=await db.from("products").update(payload).eq("id",id);if(error)throw error;if(existing?.image_path&&payload.image_path&&existing.image_path!==payload.image_path)await db.storage.from("product-images").remove([existing.image_path])}
     else{payload.id=id;payload.created_at=new Date().toISOString();const {error}=await db.from("products").insert(payload);if(error)throw error}
-    closeModal();await loadProducts();toast(editingId?"Product updated":"Product added");
+    closeModal();await loadProducts();toast(wasEditing?"Product updated":"Product added");
   }catch(err){toast(err.message,true)}
 }
 async function deleteProduct(id){const p=products.find(x=>x.id===id);if(!p||!confirm(`Delete "${p.item_name}"?`))return;const {error}=await db.from("products").delete().eq("id",id);if(error){toast(error.message,true);return}if(p.image_path)await db.storage.from("product-images").remove([p.image_path]);await loadProducts();toast("Product removed")}
@@ -269,6 +271,8 @@ $("detailModal").querySelector(".modal-backdrop").onclick=closeDetailModal;
 $("productForm").onsubmit=saveProduct;
 $("choosePhotoBtn").onclick=()=>$("productPhoto").click();
 $("productPhoto").onchange=e=>{const f=e.target.files[0];if(f){currentPhoto=f;const u=URL.createObjectURL(f);$("photoPreview").innerHTML=`<img src="${u}" alt="">`;$("photoStatus").textContent=`${(f.size/1024/1024).toFixed(1)} MB selected`}};
+$("qtyMinus").onclick=()=>$("quantity").value=Math.max(0,(Number($("quantity").value)||0)-1);
+$("qtyPlus").onclick=()=>$("quantity").value=Math.max(0,(Number($("quantity").value)||0)+1);
 
 ["searchInput","categoryFilter","statusFilter"].forEach(id=>$(id).addEventListener("input",renderTable));
 bindProductTable();
