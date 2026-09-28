@@ -167,8 +167,6 @@ function viewProduct(id){
   $("detailSelling").textContent=money(p.selling_price);
   $("detailStockValue").textContent=money(Number(p.quantity||0)*Number(p.purchase_price||0));
   $("detailSalesValue").textContent=money(Number(p.quantity||0)*Number(p.selling_price||0));
-  $("detailCreated").textContent=`Created: ${formatDate(p.created_at)}`;
-  $("detailUpdated").textContent=`Updated: ${formatDate(p.updated_at||p.created_at)}`;
   $("detailModal").classList.remove("hidden");
 
 }
