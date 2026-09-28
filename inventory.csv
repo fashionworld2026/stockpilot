@@ -1,0 +1,6 @@
+ID,Item Name,Category,SKU,Quantity,Purchase Price,Selling Price,Location,Min Stock,Created
+1,Premium T-Shirt,Clothing,TS-001,25,300,599,Rack A1,5,2026-09-20
+2,Slim Fit Jeans,Clothing,JN-002,12,700,1299,Rack A2,4,2026-09-21
+3,Classic Cap,Accessories,CP-003,3,150,399,Rack B1,5,2026-09-22
+4,Urban Sneakers,Footwear,SN-004,8,1200,2499,Rack C1,2,2026-09-23
+5,Oversized Hoodie,Clothing,HD-005,15,800,1599,Rack A3,4,2026-09-24

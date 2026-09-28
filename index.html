@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111827">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="StockPilot">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<title>StockPilot</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="loginScreen" class="auth-screen">
+  <div class="auth-card">
+    <div class="brand-big">📦 <span>StockPilot</span></div>
+    <p class="muted">Cloud inventory management</p>
+
+    <div class="auth-tabs">
+      <button id="loginTab" class="auth-tab active">Login</button>
+      <button id="signupTab" class="auth-tab">Create account</button>
+    </div>
+
+    <form id="authForm">
+      <label>Email
+        <input id="authEmail" type="email" autocomplete="email" required placeholder="you@example.com">
+      </label>
+
+      <label>Password
+        <input id="authPassword" type="password" autocomplete="current-password" minlength="6" required placeholder="Minimum 6 characters">
+      </label>
+
+      <button class="primary full" id="authButton" type="submit">Login</button>
+    </form>
+
+    <p id="authMessage" class="auth-message"></p>
+    <p class="tiny">Your inventory and product photos are stored securely in your StockPilot cloud account.</p>
+  </div>
+</div>
+
+<div id="app" class="hidden">
+  <header class="topbar">
+    <div class="brand">📦 <strong>StockPilot</strong></div>
+    <div class="top-actions">
+      <span id="userEmail" class="user-email"></span>
+      <button id="logoutBtn" class="secondary">Logout</button>
+    </div>
+  </header>
+
+  <nav class="nav">
+    <button class="nav-btn active" data-page="dashboard">Dashboard</button>
+    <button class="nav-btn" data-page="inventory">Inventory</button>
+    <button class="nav-btn" data-page="analytics">Analytics</button>
+  </nav>
+
+  <main>
+    <section id="dashboard" class="page active">
+      <div class="page-head">
+        <div>
+          <h1>Dashboard</h1>
+          <p class="muted">Your cloud inventory at a glance.</p>
+        </div>
+        <button id="addBtn" class="primary">＋ Add Product</button>
+      </div>
+
+      <div class="cards">
+        <div class="card"><span>Total Products</span><strong id="totalProducts">0</strong></div>
+        <div class="card"><span>Total Units</span><strong id="totalUnits">0</strong></div>
+        <div class="card"><span>Inventory Value</span><strong id="inventoryValue">₹0</strong></div>
+        <div class="card warning"><span>Low Stock</span><strong id="lowStock">0</strong></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h2>Recent Products</h2>
+          <button id="dashboardInventoryBtn" class="secondary">View Inventory</button>
+        </div>
+        <div id="recentProducts" class="recent-grid"></div>
+      </div>
+    </section>
+
+    <section id="inventory" class="page">
+      <div class="page-head">
+        <div>
+          <h1>Inventory</h1>
+          <p class="muted">Manage products from any device.</p>
+        </div>
+        <div class="button-row">
+          <button id="importBtn" class="secondary">Import CSV</button>
+          <button id="exportBtn" class="secondary">Export CSV</button>
+          <button id="addBtn2" class="primary">＋ Add Product</button>
+        </div>
+      </div>
+
+      <div class="filters">
+        <input id="search" placeholder="Search products, SKU, location...">
+        <select id="categoryFilter"><option value="">All categories</option></select>
+        <select id="statusFilter">
+          <option value="">All stock</option>
+          <option value="low">Low stock</option>
+          <option value="out">Out of stock</option>
+          <option value="ok">In stock</option>
+        </select>
+      </div>
+
+      <div class="panel table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>SKU</th>
+              <th>Category</th>
+              <th>Qty</th>
+              <th>Buy</th>
+              <th>Sell</th>
+              <th>Location</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="inventoryBody"></tbody>
+        </table>
+        <div id="emptyState" class="empty hidden">No products found.</div>
+      </div>
+    </section>
+
+    <section id="analytics" class="page">
+      <div class="page-head">
+        <div>
+          <h1>Analytics</h1>
+          <p class="muted">Inventory performance.</p>
+        </div>
+      </div>
+
+      <div class="analytics-grid">
+        <div class="panel">
+          <h2>Stock by Category</h2>
+          <div id="categoryChart" class="bar-chart"></div>
+        </div>
+        <div class="panel">
+          <h2>Inventory Summary</h2>
+          <div id="summaryChart" class="summary-list"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div id="modal" class="modal hidden">
+  <div class="modal-card">
+    <div class="modal-head">
+      <h2 id="modalTitle">Add Product</h2>
+      <button id="closeModal" class="icon-btn">×</button>
+    </div>
+
+    <form id="productForm">
+      <input id="productId" type="hidden">
+
+      <div class="form-grid">
+        <label>Item Name*
+          <input id="itemName" required>
+        </label>
+
+        <label>Category
+          <input id="category" list="categoryList">
+          <datalist id="categoryList">
+            <option>Clothing</option>
+            <option>Accessories</option>
+            <option>Footwear</option>
+            <option>Electronics</option>
+            <option>Other</option>
+          </datalist>
+        </label>
+
+        <label>SKU
+          <input id="sku">
+        </label>
+
+        <label>Quantity
+          <input id="quantity" type="number" min="0" value="0">
+        </label>
+
+        <label>Purchase Price
+          <input id="purchasePrice" type="number" min="0" step="0.01" value="0">
+        </label>
+
+        <label>Selling Price
+          <input id="sellingPrice" type="number" min="0" step="0.01" value="0">
+        </label>
+
+        <label>Location
+          <input id="location" placeholder="Rack A1">
+        </label>
+
+        <label>Minimum Stock
+          <input id="minStock" type="number" min="0" value="0">
+        </label>
+      </div>
+
+      <div class="photo-box">
+        <div id="photoPreview" class="photo-preview">📷</div>
+        <div>
+          <strong>Product Photo</strong>
+          <p class="muted tiny">Stored securely in your cloud account.</p>
+          <div class="button-row">
+            <label class="secondary upload">📷 Choose Photo
+              <input id="itemPhoto" type="file" accept="image/*" capture="environment" hidden>
+            </label>
+            <button id="removePhoto" type="button" class="secondary">Remove</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" id="cancelBtn" class="secondary">Cancel</button>
+        <button type="submit" class="primary" id="saveProductBtn">Save Product</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<input id="csvFile" type="file" accept=".csv,text/csv" hidden>
+<div id="toast" class="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="script.js"></script>
+</body>
+</html>
