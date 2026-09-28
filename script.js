@@ -149,7 +149,14 @@ function viewProduct(id){
   if(!p)return;
   const [cls,label]=status(p);
   $("detailTitle").textContent=p.item_name||"Product";
-  $("detailPhoto").innerHTML=p.image_url?`<img src="${p.image_url}" alt="${esc(p.item_name)}">`:`<span>SP</span>`;
+  $("detailPhoto").innerHTML=p.image_url?`<img src="${p.image_url}" alt="${esc(p.item_name)}" title="Click to view full photo">`:`<span>SP</span>`;
+  if(p.image_url){
+    $("detailPhoto").onclick=()=>openPhotoLightbox(p.image_url,p.item_name||"Product");
+    $("detailPhoto").classList.add("has-photo");
+  }else{
+    $("detailPhoto").onclick=null;
+    $("detailPhoto").classList.remove("has-photo");
+  }
   $("detailCategory").textContent=p.category||"—";
   $("detailLocation").textContent=p.location||"—";
   $("detailQuantity").textContent=Number(p.quantity||0).toLocaleString("en-IN");
@@ -164,6 +171,18 @@ function viewProduct(id){
 
 }
 function closeDetailModal(){$("detailModal").classList.add("hidden")}
+function openPhotoLightbox(src,alt){
+  $("fullProductPhoto").src=src;
+  $("fullProductPhoto").alt=alt||"Product photo";
+  $("photoLightbox").classList.remove("hidden");
+  document.body.style.overflow="hidden";
+}
+function closePhotoLightbox(){
+  $("photoLightbox").classList.add("hidden");
+  $("fullProductPhoto").src="";
+  document.body.style.overflow="";
+}
+
 window.viewProduct=viewProduct;
 window.editProduct=id=>openModal(products.find(p=>p.id===id));
 window.deleteProduct=deleteProduct;
@@ -228,6 +247,9 @@ $("addTopBtn").onclick=()=>session?openModal():openAuthModal("login");
 $("closeModal").onclick=closeModal;$("cancelModal").onclick=closeModal;$("modal-backdrop")?.addEventListener("click",closeModal);
 $("closeDetailModal").onclick=closeDetailModal;
 $("detailCloseBtn").onclick=closeDetailModal;
+$("closePhotoLightbox").onclick=closePhotoLightbox;
+$("photoLightbox").onclick=e=>{if(e.target.id==="photoLightbox")closePhotoLightbox()};
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closePhotoLightbox()});
 $("detailModal").querySelector(".modal-backdrop").onclick=closeDetailModal;
 $("productForm").onsubmit=saveProduct;
 $("choosePhotoBtn").onclick=()=>$("productPhoto").click();
