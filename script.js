@@ -53,7 +53,7 @@ function renderTable(){
   $("emptyState").classList.toggle("hidden",list.length!==0);
   $("productBody").innerHTML=list.map(p=>{
     const [cls,label]=status(p);
-    return `<tr><td><div class="product-cell">${p.image_url?`<img class="row-photo" src="${p.image_url}" alt="">`:`<div class="row-photo"></div>`}<div><strong>${esc(p.item_name)}</strong><small>${esc(p.location||"No location")}</small></div></div></td><td>${esc(p.sku||"—")}</td><td>${esc(p.category||"—")}</td><td><div class="stock-adjust"><button type="button" onclick="adjustQuantity('${p.id}',-1)" aria-label="Reduce quantity">−</button><strong>${Number(p.quantity||0)}</strong><button type="button" onclick="adjustQuantity('${p.id}',1)" aria-label="Add quantity">+</button></div><small style="display:block;color:#9a9187;margin-top:4px">min ${Number(p.min_stock||0)}</small></td><td>${money(p.purchase_price)}</td><td>${money(p.selling_price)}</td><td><span class="status ${cls}">${label}</span></td><td><div class="row-actions"><button class="icon-btn" onclick="editProduct('${p.id}')">✎</button><button class="icon-btn" onclick="deleteProduct('${p.id}')">×</button></div></td></tr>`
+    return `<tr class="product-row" onclick="viewProduct('${p.id}')"><td><div class="product-cell">${p.image_url?`<img class="row-photo" src="${p.image_url}" alt="">`:`<div class="row-photo"></div>`}<div><strong>${esc(p.item_name)}</strong><small>${esc(p.location||"No location")}</small></div></div></td><td>${esc(p.sku||"—")}</td><td>${esc(p.category||"—")}</td><td><div class="stock-adjust"><button type="button" onclick="event.stopPropagation();adjustQuantity('${p.id}',-1)" aria-label="Reduce quantity">−</button><strong>${Number(p.quantity||0)}</strong><button type="button" onclick="event.stopPropagation();adjustQuantity('${p.id}',1)" aria-label="Add quantity">+</button></div><small style="display:block;color:#9a9187;margin-top:4px">min ${Number(p.min_stock||0)}</small></td><td>${money(p.purchase_price)}</td><td>${money(p.selling_price)}</td><td><span class="status ${cls}">${label}</span></td><td><div class="row-actions"><button class="icon-btn" onclick="event.stopPropagation();editProduct('${p.id}')">✎</button><button class="icon-btn" onclick="event.stopPropagation();deleteProduct('${p.id}')">×</button></div></td></tr>`
   }).join("");
 }
 async function adjustQuantity(id,delta){
@@ -143,6 +143,34 @@ async function saveProduct(e){
   }catch(err){toast(err.message,true)}
 }
 async function deleteProduct(id){const p=products.find(x=>x.id===id);if(!p||!confirm(`Delete "${p.item_name}"?`))return;const {error}=await db.from("products").delete().eq("id",id);if(error){toast(error.message,true);return}if(p.image_path)await db.storage.from("product-images").remove([p.image_path]);await loadProducts();toast("Product removed")}
+function formatDate(value){return value?new Date(value).toLocaleString("en-IN",{dateStyle:"medium",timeStyle:"short"}):"—"}
+function viewProduct(id){
+  const p=products.find(x=>x.id===id);
+  if(!p)return;
+  const [cls,label]=status(p);
+  $("detailTitle").textContent=p.item_name||"Product";
+  $("detailPhoto").innerHTML=p.image_url?`<img src="${p.image_url}" alt="${esc(p.item_name)}">`:`<span>SP</span>`;
+  $("detailSku").textContent=p.sku||"—";
+  $("detailCategory").textContent=p.category||"—";
+  $("detailLocation").textContent=p.location||"—";
+  $("detailQuantity").textContent=Number(p.quantity||0).toLocaleString("en-IN");
+  $("detailMinStock").textContent=Number(p.min_stock||0).toLocaleString("en-IN");
+  $("detailStatus").innerHTML=`<span class="status ${cls}">${label}</span>`;
+  $("detailPurchase").textContent=money(p.purchase_price);
+  $("detailSelling").textContent=money(p.selling_price);
+  $("detailStockValue").textContent=money(Number(p.quantity||0)*Number(p.purchase_price||0));
+  $("detailSalesValue").textContent=money(Number(p.quantity||0)*Number(p.selling_price||0));
+  $("detailCreated").textContent=`Created: ${formatDate(p.created_at)}`;
+  $("detailUpdated").textContent=`Updated: ${formatDate(p.updated_at||p.created_at)}`;
+  $("detailBarcodeText").textContent=p.sku?`Barcode: ${p.sku}`:"No barcode assigned";
+  const svg=$("detailBarcodeSvg");
+  svg.innerHTML="";
+  if(p.sku && window.JsBarcode){try{JsBarcode(svg,p.sku,{format:"CODE128",displayValue:true,lineColor:"#1d1d1f",width:2,height:70,margin:10,fontSize:13});}catch(e){}}
+  $("detailEditBtn").onclick=()=>{closeDetailModal();openModal(p)};
+  $("detailModal").classList.remove("hidden");
+}
+function closeDetailModal(){$("detailModal").classList.add("hidden")}
+window.viewProduct=viewProduct;
 window.editProduct=id=>openModal(products.find(p=>p.id===id));
 window.deleteProduct=deleteProduct;
 
@@ -292,6 +320,9 @@ $("googleBtn").onclick=async()=>{
 $("authForm").onsubmit=async e=>{e.preventDefault();const email=$("authEmail").value.trim(),password=$("authPassword").value;if(isSignup){const {error}=await db.auth.signUp({email,password});if(error)toast(error.message,true);else{toast("Account created. Check your email if confirmation is required.");closeAuthModal()}}else{const {error}=await db.auth.signInWithPassword({email,password});if(error)toast(error.message,true)}};
 $("addTopBtn").onclick=()=>session?openModal():openAuthModal("login");
 $("closeModal").onclick=closeModal;$("cancelModal").onclick=closeModal;$("modal-backdrop")?.addEventListener("click",closeModal);
+$("closeDetailModal").onclick=closeDetailModal;
+$("detailCloseBtn").onclick=closeDetailModal;
+$("detailModal").querySelector(".modal-backdrop").onclick=closeDetailModal;
 $("productForm").onsubmit=saveProduct;
 $("choosePhotoBtn").onclick=()=>$("productPhoto").click();
 $("productPhoto").onchange=e=>{const f=e.target.files[0];if(f){currentPhoto=f;const u=URL.createObjectURL(f);$("photoPreview").innerHTML=`<img src="${u}" alt="">`;$("photoStatus").textContent=`${(f.size/1024/1024).toFixed(1)} MB selected`}};

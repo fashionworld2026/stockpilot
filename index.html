@@ -188,6 +188,35 @@
   </div>
 </div>
 
+<div id="detailModal" class="modal hidden">
+  <div class="modal-backdrop"></div>
+  <div class="modal-card detail-card">
+    <div class="modal-head"><div><p class="eyebrow">PRODUCT DETAILS</p><h3 id="detailTitle">Product</h3></div><button id="closeDetailModal" class="icon-btn" type="button">×</button></div>
+    <div class="detail-layout">
+      <div id="detailPhoto" class="detail-photo">SP</div>
+      <div class="detail-main">
+        <div class="detail-grid">
+          <div><span>SKU / Barcode</span><strong id="detailSku">—</strong></div>
+          <div><span>Category</span><strong id="detailCategory">—</strong></div>
+          <div><span>Location</span><strong id="detailLocation">—</strong></div>
+          <div><span>Quantity</span><strong id="detailQuantity">0</strong></div>
+          <div><span>Minimum stock</span><strong id="detailMinStock">0</strong></div>
+          <div><span>Status</span><strong id="detailStatus">—</strong></div>
+          <div><span>Purchase price</span><strong id="detailPurchase">₹0</strong></div>
+          <div><span>Selling price</span><strong id="detailSelling">₹0</strong></div>
+          <div><span>Stock cost</span><strong id="detailStockValue">₹0</strong></div>
+          <div><span>Potential sales</span><strong id="detailSalesValue">₹0</strong></div>
+        </div>
+        <div class="detail-barcode-wrap">
+          <div><p class="eyebrow">BARCODE</p><svg id="detailBarcodeSvg"></svg><small id="detailBarcodeText" class="muted">No barcode assigned</small></div>
+        </div>
+        <div class="detail-dates"><span id="detailCreated">Created: —</span><span id="detailUpdated">Updated: —</span></div>
+      </div>
+    </div>
+    <div class="modal-actions"><button id="detailEditBtn" class="secondary-btn" type="button">Edit product</button><button id="detailCloseBtn" class="primary-btn" type="button">Close</button></div>
+  </div>
+</div>
+
 <div id="productModal" class="modal hidden">
   <div class="modal-backdrop"></div>
   <div class="modal-card">
