@@ -219,13 +219,20 @@ async function handleScannedBarcode(code){
     return;
   }
   closeBarcodeScanner();
+  const normalizedCode=String(code||"").trim().replace(/\\s+/g,"");
   go("inventory");
   $("searchInput").value=code;
-  renderTable();
-  const match=products.find(p=>String(p.sku||"").trim()===code);
+  const match=products.find(p=>{
+    const sku=String(p.sku||"").trim().replace(/\\s+/g,"");
+    return sku===normalizedCode || sku===String(code||"").trim();
+  });
   if(match){
+    $("searchInput").value=match.sku||code;
+    renderTable();
+    viewProduct(match.id);
     toast(`${match.item_name} found`);
   }else{
+    renderTable();
     toast("Barcode not found. You can add it as a new product.");
     openModal();
     $("sku").value=code;
