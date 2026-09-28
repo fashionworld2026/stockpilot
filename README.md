@@ -1,22 +1,11 @@
-# StockPilot — Elegant Edition (Direct Start + Secure Login)
+# StockPilot — Direct Start + Secure Login + Mobile Photo Upload Fix
 
-StockPilot now **opens directly to the elegant dashboard** instead of showing a full-screen login page.
+Opens directly to the dashboard while retaining Supabase authentication and private inventory storage.
 
-Authentication is still enabled in Supabase and the existing Row Level Security rules remain in place.
-
-## How it works
-- If a valid Supabase session already exists, StockPilot loads the user's private cloud inventory automatically.
-- If no session exists, the dashboard opens normally, but cloud inventory actions require sign-in.
-- Click **Sign in to sync** in the sidebar or open **Settings** to sign in.
-- Email/password, Google login, account creation, and password reset remain available in a small sign-in modal.
-- Signing out returns the app to the dashboard rather than a login page.
-- No public/anonymous database policies are required.
-- No changes to your existing Supabase RLS or storage security are required.
-
-## Important
-This edition does **not** make your inventory public. Keep the existing authenticated RLS policies and private `product-images` bucket.
-
-## Publish
-Replace the contents of your existing `~/stockpilot` project while preserving `.git`, then commit and push to GitHub Pages.
-
-The browser-side Supabase publishable key is included intentionally. Never put a Supabase service-role/secret key or database password in frontend code.
+Mobile photo improvements:
+- Camera / photo-library button
+- Client-side compression for normal camera images
+- Better handling of large phone photos
+- Clear upload progress/error messages
+- HEIC/HEIF files are kept when the browser cannot decode them
+- Service-worker cache version bumped so the fix reaches phones

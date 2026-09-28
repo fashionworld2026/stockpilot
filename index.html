@@ -172,7 +172,7 @@
       <input id="productId" type="hidden">
       <div class="photo-upload">
         <div id="photoPreview" class="photo-preview">+</div>
-        <div><strong>Product photo</strong><p>Use your camera or choose an image.</p><input id="productPhoto" type="file" accept="image/*" capture="environment"></div>
+        <div class="photo-controls"><strong>Product photo</strong><p>Take a photo or choose one from your phone.</p><input id="productPhoto" type="file" accept="image/*" capture="environment" hidden><button type="button" id="choosePhotoBtn" class="secondary-btn">📷 Take / Choose photo</button><small id="photoStatus" class="photo-status"></small></div>
       </div>
       <div class="form-grid">
         <label>Product name<input id="itemName" required placeholder="e.g. Premium T-Shirt"></label>
