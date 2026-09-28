@@ -93,11 +93,43 @@ function openModal(p=null){
   $("productModal").classList.remove("hidden");
 }
 function closeModal(){$("productModal").classList.add("hidden");editingId=null;currentPhoto=null}
+async function preparePhoto(file){
+  if(!file)return null;
+  if(!file.type || !file.type.startsWith("image/")) throw new Error("Please choose an image file.");
+  const maxBytes=8*1024*1024;
+  if(file.size<=maxBytes && !/heic|heif/i.test(file.type)) return file;
+  try{
+    const bitmap=await createImageBitmap(file);
+    const maxSide=1800;
+    const scale=Math.min(1,maxSide/Math.max(bitmap.width,bitmap.height));
+    const canvas=document.createElement("canvas");
+    canvas.width=Math.max(1,Math.round(bitmap.width*scale));
+    canvas.height=Math.max(1,Math.round(bitmap.height*scale));
+    const ctx=canvas.getContext("2d",{alpha:false});
+    ctx.drawImage(bitmap,0,0,canvas.width,canvas.height);
+    bitmap.close?.();
+    const blob=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error("Could not process this photo.")),"image/jpeg",0.82));
+    return new File([blob],"photo.jpg",{type:"image/jpeg",lastModified:Date.now()});
+  }catch(err){
+    if(file.size>maxBytes) throw new Error("This photo is too large. Please choose a smaller photo.");
+    return file;
+  }
+}
 async function uploadPhoto(file,id){
   if(!file)return null;
-  const ext=(file.name.split(".").pop()||"jpg").toLowerCase(),path=`${session.user.id}/${id}-${Date.now()}.${ext}`;
-  const {error}=await db.storage.from("product-images").upload(path,file,{upsert:false,contentType:file.type||"image/jpeg"});
-  if(error)throw error;return path;
+  if(!session?.user?.id) throw new Error("Your session has expired. Please sign in again.");
+  const prepared=await preparePhoto(file);
+  if($("photoStatus")) $("photoStatus").textContent="Uploading photo…";
+  const path=`${session.user.id}/${id}-${Date.now()}.jpg`;
+  const {error}=await db.storage.from("product-images").upload(path,prepared,{upsert:false,contentType:"image/jpeg",cacheControl:"3600"});
+  if(error){
+    if($("photoStatus")) $("photoStatus").textContent="Upload failed";
+    const msg=error.message||"Photo upload failed";
+    if(/row-level security|policy|not authorized|permission/i.test(msg)) throw new Error("Photo storage permission is not configured. In Supabase, check Storage → product-images policies.");
+    throw new Error(msg);
+  }
+  if($("photoStatus")) $("photoStatus").textContent="Photo uploaded ✓";
+  return path;
 }
 async function saveProduct(e){
   e.preventDefault();if(!session){toast("Sign in to save inventory.",true);openAuthModal("login");return;}
