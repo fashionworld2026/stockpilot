@@ -11,8 +11,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
-  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -82,7 +81,7 @@
         <select id="categoryFilter"><option value="">All categories</option></select>
         <select id="statusFilter"><option value="">All stock</option><option value="in">In stock</option><option value="low">Low stock</option><option value="out">Out of stock</option></select>
         <button id="importBtn" class="secondary-btn">Import CSV</button>
-        <button id="scanBarcodeBtn" class="secondary-btn">▣ Scan barcode</button><button id="exportBtn" class="secondary-btn">Export CSV</button>
+        <button id="exportBtn" class="secondary-btn">Export CSV</button>
         <input id="csvFile" type="file" accept=".csv,text/csv" hidden>
       </div>
       <div class="panel table-panel">
@@ -166,28 +165,6 @@
   </div>
 </div>
 
-<div id="barcodeModal" class="modal hidden">
-  <div class="modal-backdrop"></div>
-  <div class="modal-card barcode-card">
-    <div class="modal-head"><div><p class="eyebrow">BARCODE TOOLS</p><h3>Scan barcode</h3></div><button id="closeBarcodeModal" class="icon-btn" type="button">×</button></div>
-    <div id="barcodeReader" class="barcode-reader"></div>
-    <div id="barcodeScanStatus" class="barcode-status">Point your phone camera at a barcode.</div>
-    <div class="barcode-manual"><input id="barcodeManual" inputmode="text" autocomplete="off" placeholder="Enter barcode manually"><button id="barcodeManualBtn" class="secondary-btn" type="button">Use code</button></div>
-    <div class="modal-actions"><button id="retryBarcode" class="secondary-btn" type="button">↻ Restart camera</button><button id="cancelBarcode" class="secondary-btn" type="button">Close</button></div>
-  </div>
-</div>
-
-<div id="createBarcodeModal" class="modal hidden">
-  <div class="modal-backdrop"></div>
-  <div class="modal-card barcode-card">
-    <div class="modal-head"><div><p class="eyebrow">BARCODE</p><h3>Create barcode</h3></div><button id="closeCreateBarcode" class="icon-btn" type="button">×</button></div>
-    <label>Custom barcode value<input id="barcodeValue" inputmode="text" autocomplete="off" placeholder="e.g. SP-TSHIRT-001"></label>
-    <div class="barcode-custom-row"><button type="button" id="generateCustomBarcode" class="secondary-btn">✨ Generate custom code</button><span class="field-help">Use letters, numbers or dashes.</span></div>
-    <div class="barcode-preview"><svg id="barcodeSvg"></svg></div>
-    <div class="modal-actions"><button id="downloadBarcode" class="secondary-btn" type="button">Save barcode</button><button id="useBarcodeValue" class="primary-btn" type="button">Use in product</button></div>
-  </div>
-</div>
-
 <div id="detailModal" class="modal hidden">
   <div class="modal-backdrop"></div>
   <div class="modal-card detail-card">
@@ -196,7 +173,7 @@
       <div id="detailPhoto" class="detail-photo">SP</div>
       <div class="detail-main">
         <div class="detail-grid">
-          <div><span>SKU / Barcode</span><strong id="detailSku">—</strong></div>
+          <div><span>SKU</span><strong id="detailSku">—</strong></div>
           <div><span>Category</span><strong id="detailCategory">—</strong></div>
           <div><span>Location</span><strong id="detailLocation">—</strong></div>
           <div><span>Quantity</span><strong id="detailQuantity">0</strong></div>
@@ -206,12 +183,7 @@
           <div><span>Selling price</span><strong id="detailSelling">₹0</strong></div>
           <div><span>Stock cost</span><strong id="detailStockValue">₹0</strong></div>
           <div><span>Potential sales</span><strong id="detailSalesValue">₹0</strong></div>
-        </div>
-        <div class="detail-barcode-wrap">
-          <div><p class="eyebrow">BARCODE</p><svg id="detailBarcodeSvg"></svg><small id="detailBarcodeText" class="muted">No barcode assigned</small></div>
-        </div>
-        <div class="detail-dates"><span id="detailCreated">Created: —</span><span id="detailUpdated">Updated: —</span></div>
-      </div>
+        </div></div>
     </div>
     <div class="modal-actions"><button id="detailEditBtn" class="secondary-btn" type="button">Edit product</button><button id="detailCloseBtn" class="primary-btn" type="button">Close</button></div>
   </div>
@@ -229,7 +201,7 @@
       </div>
       <div class="form-grid">
         <label>Product name<input id="itemName" required placeholder="e.g. Premium T-Shirt"></label>
-        <label>SKU / Barcode<div class="field-with-action"><input id="sku" inputmode="text" autocomplete="off" placeholder="e.g. 8901234567890"><button type="button" id="scanProductBarcodeBtn" class="icon-btn" title="Scan barcode">▣</button><button type="button" id="createBarcodeBtn" class="icon-btn" title="Create custom barcode">▥</button></div><small class="field-help">Use the product SKU or barcode number. Scan or create a barcode from this value.</small></label>
+        <label>SKU<div class="field-with-action"><input id="sku" inputmode="text" autocomplete="off" placeholder="e.g. SKU-001"></div><small class="field-help">Use the product SKU or item code.</small></label>
         <label>Category<input id="category" placeholder="Clothing"></label>
         <label>Location<input id="location" placeholder="Rack A1"></label>
         <label>Quantity<div class="quantity-stepper"><button type="button" id="qtyMinus" class="qty-btn">−</button><input id="quantity" type="number" min="0" value="0" required><button type="button" id="qtyPlus" class="qty-btn">+</button></div></label>

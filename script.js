@@ -162,12 +162,7 @@ function viewProduct(id){
   $("detailSalesValue").textContent=money(Number(p.quantity||0)*Number(p.selling_price||0));
   $("detailCreated").textContent=`Created: ${formatDate(p.created_at)}`;
   $("detailUpdated").textContent=`Updated: ${formatDate(p.updated_at||p.created_at)}`;
-  $("detailBarcodeText").textContent=p.sku?`Barcode: ${p.sku}`:"No barcode assigned";
-  const svg=$("detailBarcodeSvg");
-  svg.innerHTML="";
-  if(p.sku && window.JsBarcode){try{JsBarcode(svg,p.sku,{format:"CODE128",displayValue:true,lineColor:"#1d1d1f",width:2,height:70,margin:10,fontSize:13});}catch(e){}}
-  $("detailEditBtn").onclick=()=>{closeDetailModal();openModal(p)};
-  $("detailModal").classList.remove("hidden");
+
 }
 function closeDetailModal(){$("detailModal").classList.add("hidden")}
 window.viewProduct=viewProduct;
@@ -175,124 +170,6 @@ window.editProduct=id=>openModal(products.find(p=>p.id===id));
 window.deleteProduct=deleteProduct;
 
 
-let barcodeScanner=null;
-let barcodeTarget="search";
-let barcodeBusy=false;
-let barcodeLastCode="";
-function stopBarcodeScanner(){
-  const scanner=barcodeScanner;
-  barcodeScanner=null;
-  barcodeBusy=false;
-  if(scanner){
-    try{scanner.stop().catch(()=>{});}catch(e){}
-    try{scanner.clear().catch(()=>{});}catch(e){}
-  }
-  const reader=$("barcodeReader");
-  if(reader) reader.innerHTML="";
-}
-async function openBarcodeScanner(target="search"){
-  barcodeTarget=target;
-  barcodeBusy=false;
-  barcodeLastCode="";
-  const modal=$("barcodeModal");
-  modal.classList.remove("hidden");
-  $("barcodeScanStatus").textContent="Opening camera…";
-  $("barcodeManual").value=target==="product"?$("sku").value.trim():"";
-  stopBarcodeScanner();
-  if(!window.isSecureContext){
-    $("barcodeScanStatus").textContent="Camera needs HTTPS. Use the StockPilot GitHub Pages address.";
-    return;
-  }
-  if(!navigator.mediaDevices?.getUserMedia){
-    $("barcodeScanStatus").textContent="Camera is not available in this browser. You can enter the barcode below.";
-    return;
-  }
-  if(!window.Html5Qrcode){
-    $("barcodeScanStatus").textContent="Scanner library is unavailable. Check your internet connection, then try again.";
-    return;
-  }
-  try{
-    barcodeScanner=new Html5Qrcode("barcodeReader");
-    const config={fps:10,qrbox:{width:Math.min(300,Math.max(220,window.innerWidth-70)),height:140},aspectRatio:1.777778};
-    await barcodeScanner.start({facingMode:{exact:"environment"}},config,onBarcodeDetected,()=>{});
-    $("barcodeScanStatus").textContent="Camera ready — place the barcode inside the box.";
-  }catch(firstErr){
-    try{
-      stopBarcodeScanner();
-      barcodeScanner=new Html5Qrcode("barcodeReader");
-      await barcodeScanner.start({facingMode:"environment"},config,onBarcodeDetected,()=>{});
-      $("barcodeScanStatus").textContent="Camera ready — place the barcode inside the box.";
-    }catch(err){
-      stopBarcodeScanner();
-      $("barcodeScanStatus").textContent="Camera could not start. Allow camera access in your browser, then try again.";
-    }
-  }
-}
-async function onBarcodeDetected(decodedText){
-  const code=String(decodedText||"").replace(/[\r\n]/g,"").trim();
-  if(!code || barcodeBusy || code===barcodeLastCode)return;
-  barcodeBusy=true;
-  barcodeLastCode=code;
-  $("barcodeScanStatus").textContent=`Barcode detected: ${code}`;
-  await handleScannedBarcode(code);
-}
-function normalizeBarcode(v){return String(v??"").trim().replace(/\s+/g,"").toUpperCase()}
-async function handleScannedBarcode(code){
-  code=String(code||"").trim();
-  if(!code){barcodeBusy=false;return;}
-  const normalized=normalizeBarcode(code);
-  stopBarcodeScanner();
-  if(barcodeTarget==="product"){
-    $("sku").value=code;
-    closeBarcodeScanner();
-    toast("Barcode added to product");
-    return;
-  }
-  go("inventory");
-  $("searchInput").value=code;
-  renderTable();
-  const match=products.find(p=>normalizeBarcode(p.sku)===normalized);
-  closeBarcodeScanner();
-  if(match){
-    toast(`${match.item_name} found`);
-    setTimeout(()=>viewProduct(match.id),120);
-  }else{
-    toast("Barcode not found. You can add it as a new product.");
-    setTimeout(()=>{openModal();$("sku").value=code;},120);
-  }
-}
-function closeBarcodeScanner(){stopBarcodeScanner();$("barcodeModal").classList.add("hidden");}
-function makeCustomBarcode(){
-  const chars="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  let code="SP-";
-  for(let i=0;i<3;i++){
-    if(i)code+="-";
-    for(let j=0;j<4;j++)code+=chars[Math.floor(Math.random()*chars.length)];
-  }
-  return code;
-}
-function openCreateBarcode(value=""){
-  $("createBarcodeModal").classList.remove("hidden");
-  const fallback=makeCustomBarcode();
-  $("barcodeValue").value=String(value||"").trim()||fallback;
-  renderGeneratedBarcode();
-}
-function closeCreateBarcode(){$("createBarcodeModal").classList.add("hidden");}
-function renderGeneratedBarcode(){
-  const value=$("barcodeValue").value.trim();
-  if(!value)return;
-  if(!window.JsBarcode){toast("Barcode generator is unavailable. Check your internet connection.",true);return;}
-  try{
-    JsBarcode("#barcodeSvg",value,{format:"CODE128",displayValue:true,lineColor:"#1d1d1f",width:2,height:90,margin:12,fontSize:14});
-  }catch(err){toast("Invalid barcode value.",true);}
-}
-function downloadGeneratedBarcode(){
-  renderGeneratedBarcode();
-  const svg=$("barcodeSvg");
-  if(!svg.innerHTML)return;
-  const blob=new Blob([new XMLSerializer().serializeToString(svg)],{type:"image/svg+xml;charset=utf-8"});
-  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`stockpilot-barcode-${$("barcodeValue").value.trim()||"code"}.svg`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
-}
 function openAuthModal(mode="login"){
   $("authModal").classList.remove("hidden");
   $("authLoginPanel").classList.toggle("hidden",mode!=="login");
@@ -358,20 +235,7 @@ $("choosePhotoBtn").onclick=()=>$("productPhoto").click();
 $("productPhoto").onchange=e=>{const f=e.target.files[0];if(f){currentPhoto=f;const u=URL.createObjectURL(f);$("photoPreview").innerHTML=`<img src="${u}" alt="">`;$("photoStatus").textContent=`${(f.size/1024/1024).toFixed(1)} MB selected`}};
 $("qtyMinus").onclick=()=>$("quantity").value=Math.max(0,(Number($("quantity").value)||0)-1);
 $("qtyPlus").onclick=()=>$("quantity").value=Math.max(0,(Number($("quantity").value)||0)+1);
-$("scanBarcodeBtn").onclick=()=>openBarcodeScanner("search");
-$("scanProductBarcodeBtn").onclick=()=>openBarcodeScanner("product");
-$("createBarcodeBtn").onclick=()=>openCreateBarcode($("sku").value.trim());
-$("closeBarcodeModal").onclick=closeBarcodeScanner;
-$("cancelBarcode").onclick=closeBarcodeScanner;
-$("barcodeModal").querySelector(".modal-backdrop").onclick=closeBarcodeScanner;
-$("barcodeManualBtn").onclick=()=>handleScannedBarcode($("barcodeManual").value);
-$("barcodeManual").addEventListener("keydown",e=>{if(e.key==="Enter")handleScannedBarcode(e.target.value)});
-$("closeCreateBarcode").onclick=closeCreateBarcode;
-$("createBarcodeModal").querySelector(".modal-backdrop").onclick=closeCreateBarcode;
-$("barcodeValue").addEventListener("input",renderGeneratedBarcode);
-$("generateCustomBarcode").onclick=()=>{$("barcodeValue").value=makeCustomBarcode();renderGeneratedBarcode();toast("Custom barcode created")};
-$("downloadBarcode").onclick=downloadGeneratedBarcode;
-$("useBarcodeValue").onclick=()=>{$("sku").value=$("barcodeValue").value.trim();closeCreateBarcode();toast("Barcode added to product")};
+
 ["searchInput","categoryFilter","statusFilter"].forEach(id=>$(id).addEventListener("input",renderTable));
 document.querySelectorAll(".nav-item").forEach(b=>b.onclick=()=>go(b.dataset.page));
 document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>go(b.dataset.go));
