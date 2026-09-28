@@ -53,7 +53,7 @@ function renderTable(){
   $("emptyState").classList.toggle("hidden",list.length!==0);
   $("productBody").innerHTML=list.map(p=>{
     const [cls,label]=status(p);
-    return `<tr class="product-row" data-product-id="${p.id}" onclick="viewProduct('${p.id}')"><td><div class="product-cell">${p.image_url?`<img class="row-photo" src="${p.image_url}" alt="">`:`<div class="row-photo"></div>`}<div><strong>${esc(p.item_name)}</strong><small>${esc(p.location||"No location")}</small></div></div></td><td>${esc(p.category||"—")}</td><td><div class="stock-adjust"><button type="button" onclick="event.stopPropagation();adjustQuantity('${p.id}',-1)" aria-label="Reduce quantity">−</button><strong>${Number(p.quantity||0)}</strong><button type="button" onclick="event.stopPropagation();adjustQuantity('${p.id}',1)" aria-label="Add quantity">+</button></div><small style="display:block;color:#9a9187;margin-top:4px">min ${Number(p.min_stock||0)}</small></td><td>${money(p.purchase_price)}</td><td>${money(p.selling_price)}</td><td><span class="status ${cls}">${label}</span></td><td><div class="row-actions"><button type="button" class="icon-btn" title="View details" onclick="event.stopPropagation();viewProduct('${p.id}')">👁</button><button type="button" class="icon-btn" title="Edit product" onclick="event.stopPropagation();editProduct('${p.id}')">✎</button><button type="button" class="icon-btn" title="Delete product" onclick="event.stopPropagation();deleteProduct('${p.id}')">×</button></div></td></tr>`
+    return `<tr class="product-row" data-product-id="${p.id}" onclick="viewProduct('${p.id}')"><td><div class="product-cell">${p.image_url?`<img class="row-photo" src="${p.image_url}" alt="">`:`<div class="row-photo"></div>`}<div><strong>${esc(p.item_name)}</strong><small>${esc(p.location||"No location")}</small></div></div></td><td>${esc(p.category||"—")}</td><td><strong>${Number(p.quantity||0)}</strong><small style="display:block;color:#9a9187;margin-top:4px">min ${Number(p.min_stock||0)}</small></td><td>${money(p.purchase_price)}</td><td>${money(p.selling_price)}</td><td><span class="status ${cls}">${label}</span></td><td><div class="row-actions"><button type="button" class="icon-btn" title="View details" onclick="event.stopPropagation();viewProduct('${p.id}')">👁</button><button type="button" class="icon-btn" title="Edit product" onclick="event.stopPropagation();editProduct('${p.id}')">✎</button><button type="button" class="icon-btn" title="Delete product" onclick="event.stopPropagation();deleteProduct('${p.id}')">×</button></div></td></tr>`
   }).join("");
 }
 
@@ -269,8 +269,6 @@ $("detailModal").querySelector(".modal-backdrop").onclick=closeDetailModal;
 $("productForm").onsubmit=saveProduct;
 $("choosePhotoBtn").onclick=()=>$("productPhoto").click();
 $("productPhoto").onchange=e=>{const f=e.target.files[0];if(f){currentPhoto=f;const u=URL.createObjectURL(f);$("photoPreview").innerHTML=`<img src="${u}" alt="">`;$("photoStatus").textContent=`${(f.size/1024/1024).toFixed(1)} MB selected`}};
-$("qtyMinus").onclick=()=>$("quantity").value=Math.max(0,(Number($("quantity").value)||0)-1);
-$("qtyPlus").onclick=()=>$("quantity").value=Math.max(0,(Number($("quantity").value)||0)+1);
 
 ["searchInput","categoryFilter","statusFilter"].forEach(id=>$(id).addEventListener("input",renderTable));
 bindProductTable();
