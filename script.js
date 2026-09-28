@@ -152,6 +152,7 @@ function viewProduct(id){
   $("detailPhoto").innerHTML=p.image_url?`<img src="${p.image_url}" alt="${esc(p.item_name)}" title="Click to view full photo">`:`<span>SP</span>`;
   if(p.image_url){
     $("detailPhoto").onclick=()=>openPhotoLightbox(p.image_url,p.item_name||"Product");
+    $("detailPhoto").querySelector("img")?.addEventListener("click",e=>{e.stopPropagation();openPhotoLightbox(p.image_url,p.item_name||"Product")});
     $("detailPhoto").classList.add("has-photo");
   }else{
     $("detailPhoto").onclick=null;
@@ -168,6 +169,7 @@ function viewProduct(id){
   $("detailSalesValue").textContent=money(Number(p.quantity||0)*Number(p.selling_price||0));
   $("detailCreated").textContent=`Created: ${formatDate(p.created_at)}`;
   $("detailUpdated").textContent=`Updated: ${formatDate(p.updated_at||p.created_at)}`;
+  $("detailModal").classList.remove("hidden");
 
 }
 function closeDetailModal(){$("detailModal").classList.add("hidden")}
