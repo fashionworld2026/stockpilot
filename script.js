@@ -172,7 +172,6 @@ function viewProduct(id){
     $("detailPhoto").classList.remove("has-photo");
   }
   $("detailCategory").textContent=p.category||"—";
-  $("detailLocation").textContent=p.location||"—";
   $("detailQuantity").textContent=Number(p.quantity||0).toLocaleString("en-IN");
   $("detailMinStock").textContent=Number(p.min_stock||0).toLocaleString("en-IN");
   $("detailStatus").innerHTML=`<span class="status ${cls}">${label}</span>`;
