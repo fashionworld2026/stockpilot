@@ -179,6 +179,8 @@ function viewProduct(id){
   $("detailSelling").textContent=money(p.selling_price);
   $("detailStockValue").textContent=money(Number(p.quantity||0)*Number(p.purchase_price||0));
   $("detailSalesValue").textContent=money(Number(p.quantity||0)*Number(p.selling_price||0));
+  $("detailModal").dataset.productId=p.id;
+  $("detailModal").dataset.productId=p.id;
   $("detailModal").classList.remove("hidden");
 
 }
@@ -259,6 +261,7 @@ $("addTopBtn").onclick=()=>session?openModal():openAuthModal("login");
 $("closeModal").onclick=closeModal;$("cancelModal").onclick=closeModal;$("modal-backdrop")?.addEventListener("click",closeModal);
 $("closeDetailModal").onclick=closeDetailModal;
 $("detailCloseBtn").onclick=closeDetailModal;
+$("detailEditBtn").onclick=()=>{const id=$("detailModal").dataset.productId;const p=products.find(x=>x.id===id);if(!p){toast("Product not found.",true);return}closeDetailModal();openModal(p)};
 $("closePhotoLightbox").onclick=closePhotoLightbox;
 $("photoLightbox").onclick=e=>{if(e.target.id==="photoLightbox")closePhotoLightbox()};
 document.addEventListener("keydown",e=>{if(e.key==="Escape")closePhotoLightbox()});
