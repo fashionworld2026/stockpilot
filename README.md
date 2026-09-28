@@ -1,11 +1,24 @@
-# StockPilot Professional Edition
+# StockPilot Elegant Edition
 
-This is a redesigned frontend for the existing StockPilot Supabase project.
+A refined, responsive PWA for cloud-synchronized inventory management.
 
-## Deploy
-Replace the contents of your existing `~/stockpilot` folder with these files, then commit and push to GitHub Pages.
+## Includes
+- Elegant responsive SaaS interface
+- Supabase authentication
+- Cloud inventory database
+- Product image uploads
+- Dashboard, inventory and insights
+- CSV import/export
+- PWA installation
+- Mobile navigation
+- Automatic signed image URLs
+- GitHub Pages ready
 
-Supabase configuration is already set to the existing StockPilot project.
+## Existing Supabase project
+This edition is configured for the StockPilot Supabase project used by the existing application.
 
-## Important
-Keep Supabase Row Level Security (RLS) enabled. The browser uses the publishable key only; never add a service-role/secret key.
+## Publish
+Replace the contents of your existing `~/stockpilot` project while preserving `.git`, then commit and push to GitHub Pages.
+
+## Note
+The browser-side Supabase publishable key is intentionally included. Keep Row Level Security enabled and never put a Supabase service-role/secret key in frontend code.

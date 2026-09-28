@@ -1,172 +1,167 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#111827">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="StockPilot">
-  <title>StockPilot — Inventory Management</title>
-  <link rel="manifest" href="manifest.json">
-  <link rel="icon" href="icons/icon-192.png">
-  <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <link rel="stylesheet" href="style.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f7f5f0">
+<meta name="description" content="StockPilot elegant inventory management">
+<link rel="manifest" href="manifest.json">
+<title>StockPilot — Elegant Inventory</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div id="toast" class="toast"></div>
+<div id="toast"></div>
 
-  <section id="authScreen" class="auth-screen">
-    <div class="auth-brand">
-      <div class="brand-mark">S</div>
+<section id="authView" class="auth-shell">
+  <div class="auth-card">
+    <div class="brand-mark">S</div>
+    <p class="eyebrow">INVENTORY, REFINED</p>
+    <h1>StockPilot</h1>
+    <p class="auth-copy">A calm, elegant workspace for keeping your products, stock and business beautifully organized.</p>
+    <form id="authForm">
+      <label>Email<input id="authEmail" type="email" autocomplete="email" required placeholder="you@example.com"></label>
+      <label>Password<input id="authPassword" type="password" autocomplete="current-password" required placeholder="••••••••"></label>
+      <button class="primary-btn" type="submit" id="authSubmit">Sign in</button>
+    </form>
+    <button class="text-btn" id="toggleAuth" type="button">Create a new account</button>
+    <p class="auth-note">Your inventory is securely synchronized through your StockPilot cloud account.</p>
+  </div>
+</section>
+
+<div id="appView" class="app hidden">
+  <aside class="sidebar">
+    <div class="sidebar-top">
+      <div class="logo-row"><div class="mini-mark">S</div><span>StockPilot</span></div>
+      <div class="tagline">Elegant inventory</div>
+    </div>
+    <nav>
+      <button class="nav-item active" data-page="dashboard"><span>⌂</span> Overview</button>
+      <button class="nav-item" data-page="inventory"><span>□</span> Inventory</button>
+      <button class="nav-item" data-page="analytics"><span>◌</span> Insights</button>
+      <button class="nav-item" data-page="settings"><span>⚙</span> Settings</button>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="sync-pill"><span id="syncDot"></span><span id="syncText">Cloud synced</span></div>
+      <button id="signOutBtn" class="quiet-btn">Sign out</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
       <div>
-        <strong>StockPilot</strong>
-        <span>Inventory, simplified.</span>
+        <p class="eyebrow" id="pageEyebrow">YOUR BUSINESS, IN ORDER</p>
+        <h2 id="pageTitle">Overview</h2>
       </div>
-    </div>
-    <div class="auth-card">
-      <div class="auth-copy">
-        <span class="eyebrow">CLOUD INVENTORY</span>
-        <h1>Run your stock with confidence.</h1>
-        <p>Manage products, photos, pricing and stock levels from any device.</p>
+      <div class="top-actions">
+        <button id="installBtn" class="secondary-btn hidden">Install app</button>
+        <button id="addTopBtn" class="primary-btn">＋ Add product</button>
       </div>
-      <form id="authForm">
-        <label>Email<input id="email" type="email" required autocomplete="email" placeholder="you@example.com"></label>
-        <label>Password<input id="password" type="password" required minlength="6" autocomplete="current-password" placeholder="••••••••"></label>
-        <button id="authSubmit" class="primary full" type="submit">Sign in</button>
-        <button id="toggleAuth" class="text-btn" type="button">Create a new account</button>
-      </form>
-    </div>
-    <div class="auth-footer">Secure cloud sync powered by Supabase</div>
-  </section>
+    </header>
 
-  <div id="app" class="app hidden">
-    <aside class="sidebar">
-      <div class="side-brand">
-        <div class="brand-mark">S</div>
-        <div><strong>StockPilot</strong><small>Inventory, simplified.</small></div>
+    <section id="dashboardPage" class="page">
+      <div class="hero-card">
+        <div>
+          <p class="eyebrow">STOCK AT A GLANCE</p>
+          <h3>Everything in its place.</h3>
+          <p>Keep an elegant view of your catalog, stock levels and inventory value.</p>
+        </div>
+        <div class="hero-orb"><span>SP</span></div>
       </div>
-      <nav>
-        <button class="nav-item active" data-view="dashboard"><span>⌂</span>Dashboard</button>
-        <button class="nav-item" data-view="inventory"><span>▣</span>Inventory</button>
-        <button class="nav-item" data-view="analytics"><span>◔</span>Analytics</button>
-        <button class="nav-item" data-view="settings"><span>⚙</span>Settings</button>
-      </nav>
-      <div class="side-bottom">
-        <div class="sync-pill"><i></i><span id="syncText">Synced</span></div>
-        <button id="signOut" class="logout">Sign out</button>
+      <div class="metric-grid">
+        <div class="metric"><span>Total products</span><strong id="mProducts">0</strong><small>active items</small></div>
+        <div class="metric"><span>Stock units</span><strong id="mUnits">0</strong><small>units on hand</small></div>
+        <div class="metric"><span>Inventory value</span><strong id="mValue">₹0</strong><small>at purchase cost</small></div>
+        <div class="metric"><span>Needs attention</span><strong id="mAttention">0</strong><small>low or out of stock</small></div>
       </div>
-    </aside>
-
-    <main class="main">
-      <header class="topbar">
-        <div class="mobile-brand"><div class="brand-mark">S</div><strong>StockPilot</strong></div>
-        <div class="top-actions">
-          <button id="installBtn" class="secondary hidden">Install app</button>
-          <button id="addTop" class="primary">＋ Add product</button>
-          <button id="userMenu" class="avatar">S</button>
+      <div class="two-col">
+        <div class="panel">
+          <div class="panel-head"><div><p class="eyebrow">RECENTLY ADDED</p><h3>New arrivals</h3></div><button class="text-btn" data-go="inventory">View all</button></div>
+          <div id="recentList" class="recent-list"></div>
         </div>
-      </header>
-
-      <section class="content">
-        <div id="dashboardView" class="view">
-          <div class="page-head">
-            <div><span class="eyebrow">OVERVIEW</span><h2>Good to see you.</h2><p>Here’s what’s happening with your inventory.</p></div>
-            <button id="dashboardAdd" class="primary">＋ Add product</button>
-          </div>
-          <div class="stat-grid">
-            <article class="stat-card"><div class="stat-icon">▣</div><span>Total products</span><strong id="statProducts">0</strong><small>Active SKUs</small></article>
-            <article class="stat-card"><div class="stat-icon">◫</div><span>Stock units</span><strong id="statUnits">0</strong><small>Units currently held</small></article>
-            <article class="stat-card"><div class="stat-icon">₹</div><span>Inventory value</span><strong id="statValue">₹0</strong><small>At purchase price</small></article>
-            <article class="stat-card warning"><div class="stat-icon">!</div><span>Low stock</span><strong id="statLow">0</strong><small>Needs attention</small></article>
-          </div>
-          <div class="two-col">
-            <article class="panel">
-              <div class="panel-head"><div><h3>Recent products</h3><p>Latest items added to StockPilot</p></div><button class="link-btn" data-go="inventory">View all</button></div>
-              <div id="recentList" class="product-list"></div>
-            </article>
-            <article class="panel">
-              <div class="panel-head"><div><h3>Stock health</h3><p>Quick view of inventory status</p></div></div>
-              <div class="health">
-                <div><div><span>In stock</span><strong id="healthIn">0</strong></div><div class="bar"><i id="barIn"></i></div></div>
-                <div><div><span>Low stock</span><strong id="healthLow">0</strong></div><div class="bar"><i id="barLow"></i></div></div>
-                <div><div><span>Out of stock</span><strong id="healthOut">0</strong></div><div class="bar"><i id="barOut"></i></div></div>
-              </div>
-            </article>
-          </div>
+        <div class="panel">
+          <div class="panel-head"><div><p class="eyebrow">STOCK HEALTH</p><h3>At a glance</h3></div></div>
+          <div id="healthBars" class="health-bars"></div>
         </div>
+      </div>
+    </section>
 
-        <div id="inventoryView" class="view hidden">
-          <div class="page-head"><div><span class="eyebrow">CATALOG</span><h2>Inventory</h2><p>Search, filter and manage every product.</p></div><button id="inventoryAdd" class="primary">＋ Add product</button></div>
-          <div class="toolbar">
-            <div class="search"><span>⌕</span><input id="search" placeholder="Search products or SKU…"></div>
-            <select id="categoryFilter"><option value="">All categories</option></select>
-            <select id="statusFilter"><option value="">All statuses</option><option value="in">In stock</option><option value="low">Low stock</option><option value="out">Out of stock</option></select>
-            <button id="exportCsv" class="secondary">Export CSV</button>
-            <label class="secondary file-btn">Import CSV<input id="importCsv" type="file" accept=".csv,text/csv"></label>
-          </div>
-          <div class="table-panel">
-            <div class="table-wrap">
-              <table><thead><tr><th>Product</th><th>SKU</th><th>Category</th><th>Stock</th><th>Purchase</th><th>Selling</th><th>Location</th><th>Status</th><th></th></tr></thead>
-              <tbody id="inventoryBody"></tbody></table>
-            </div>
-            <div id="emptyState" class="empty hidden"><div>▣</div><h3>No products found</h3><p>Add your first product or change the filters.</p><button class="primary" id="emptyAdd">＋ Add product</button></div>
-          </div>
-        </div>
+    <section id="inventoryPage" class="page hidden">
+      <div class="toolbar panel">
+        <div class="search-wrap"><span>⌕</span><input id="searchInput" placeholder="Search products, SKU or category"></div>
+        <select id="categoryFilter"><option value="">All categories</option></select>
+        <select id="statusFilter"><option value="">All stock</option><option value="in">In stock</option><option value="low">Low stock</option><option value="out">Out of stock</option></select>
+        <button id="importBtn" class="secondary-btn">Import CSV</button>
+        <button id="exportBtn" class="secondary-btn">Export CSV</button>
+        <input id="csvFile" type="file" accept=".csv,text/csv" hidden>
+      </div>
+      <div class="panel table-panel">
+        <div class="panel-head"><div><p class="eyebrow">CATALOG</p><h3>Products</h3></div><span id="resultCount" class="muted"></span></div>
+        <div class="table-scroll"><table><thead><tr><th>Product</th><th>SKU</th><th>Category</th><th>Stock</th><th>Purchase</th><th>Selling</th><th>Status</th><th></th></tr></thead><tbody id="productBody"></tbody></table></div>
+        <div id="emptyState" class="empty hidden">No products match your current filters.</div>
+      </div>
+    </section>
 
-        <div id="analyticsView" class="view hidden">
-          <div class="page-head"><div><span class="eyebrow">INSIGHTS</span><h2>Analytics</h2><p>Understand your stock at a glance.</p></div></div>
-          <div class="analytics-grid">
-            <article class="panel"><div class="panel-head"><div><h3>Inventory by category</h3><p>Units by product category</p></div></div><div id="categoryBars" class="category-bars"></div></article>
-            <article class="panel"><div class="panel-head"><div><h3>Value overview</h3><p>Purchase vs selling value</p></div></div><div class="value-overview"><div><span>Purchase value</span><strong id="purchaseTotal">₹0</strong></div><div><span>Potential sales value</span><strong id="salesTotal">₹0</strong></div><div><span>Potential gross margin</span><strong id="marginTotal">₹0</strong></div></div></article>
-          </div>
-          <article class="panel"><div class="panel-head"><div><h3>Attention required</h3><p>Products that are low or out of stock</p></div></div><div id="attentionList" class="attention-list"></div></article>
-        </div>
+    <section id="analyticsPage" class="page hidden">
+      <div class="metric-grid three">
+        <div class="metric"><span>Purchase value</span><strong id="aPurchase">₹0</strong><small>current stock cost</small></div>
+        <div class="metric"><span>Potential sales</span><strong id="aSales">₹0</strong><small>current stock at selling price</small></div>
+        <div class="metric"><span>Potential margin</span><strong id="aMargin">₹0</strong><small>before operating costs</small></div>
+      </div>
+      <div class="two-col">
+        <div class="panel"><div class="panel-head"><div><p class="eyebrow">BY CATEGORY</p><h3>Inventory mix</h3></div></div><div id="categoryBars" class="category-bars"></div></div>
+        <div class="panel"><div class="panel-head"><div><p class="eyebrow">ATTENTION</p><h3>Products to review</h3></div></div><div id="attentionList" class="attention-list"></div></div>
+      </div>
+    </section>
 
-        <div id="settingsView" class="view hidden">
-          <div class="page-head"><div><span class="eyebrow">PREFERENCES</span><h2>Settings</h2><p>Account and app information.</p></div></div>
-          <div class="settings-grid">
-            <article class="panel"><h3>Account</h3><div class="setting-row"><span>Email</span><strong id="accountEmail">—</strong></div><div class="setting-row"><span>Sync</span><strong>Cloud enabled</strong></div></article>
-            <article class="panel"><h3>Data</h3><p class="muted">Your products and product photos are stored in your private Supabase account and protected by row-level security.</p><button id="refreshData" class="secondary">Refresh from cloud</button></article>
-          </div>
-        </div>
-      </section>
+    <section id="settingsPage" class="page hidden">
+      <div class="panel settings-panel">
+        <p class="eyebrow">ACCOUNT</p><h3>Your StockPilot account</h3>
+        <div class="setting-row"><span>Email</span><strong id="accountEmail">—</strong></div>
+        <div class="setting-row"><span>Cloud database</span><strong>Connected</strong></div>
+        <div class="setting-row"><span>Product photos</span><strong>Cloud storage</strong></div>
+        <div class="setting-row"><span>App version</span><strong>Elegant Edition</strong></div>
+        <button id="refreshBtn" class="secondary-btn">Refresh from cloud</button>
+      </div>
+    </section>
+  </main>
+</div>
 
-      <nav class="mobile-nav">
-        <button class="active" data-view="dashboard">⌂<span>Home</span></button>
-        <button data-view="inventory">▣<span>Inventory</span></button>
-        <button data-view="analytics">◔<span>Analytics</span></button>
-        <button data-view="settings">⚙<span>Settings</span></button>
-      </nav>
-    </main>
+<nav class="mobile-nav">
+  <button class="nav-item active" data-page="dashboard"><span>⌂</span>Home</button>
+  <button class="nav-item" data-page="inventory"><span>□</span>Stock</button>
+  <button class="nav-item" data-page="analytics"><span>◌</span>Insights</button>
+  <button class="nav-item" data-page="settings"><span>⚙</span>More</button>
+</nav>
+
+<div id="productModal" class="modal hidden">
+  <div class="modal-backdrop"></div>
+  <div class="modal-card">
+    <div class="modal-head"><div><p class="eyebrow">PRODUCT DETAILS</p><h3 id="modalTitle">Add product</h3></div><button id="closeModal" class="icon-btn">×</button></div>
+    <form id="productForm">
+      <input id="productId" type="hidden">
+      <div class="photo-upload">
+        <div id="photoPreview" class="photo-preview">+</div>
+        <div><strong>Product photo</strong><p>Use your camera or choose an image.</p><input id="productPhoto" type="file" accept="image/*" capture="environment"></div>
+      </div>
+      <div class="form-grid">
+        <label>Product name<input id="itemName" required placeholder="e.g. Premium T-Shirt"></label>
+        <label>SKU<input id="sku" placeholder="e.g. TS-001"></label>
+        <label>Category<input id="category" placeholder="Clothing"></label>
+        <label>Location<input id="location" placeholder="Rack A1"></label>
+        <label>Quantity<input id="quantity" type="number" min="0" value="0" required></label>
+        <label>Minimum stock<input id="minStock" type="number" min="0" value="5"></label>
+        <label>Purchase price<input id="purchasePrice" type="number" min="0" step="0.01" value="0"></label>
+        <label>Selling price<input id="sellingPrice" type="number" min="0" step="0.01" value="0"></label>
+      </div>
+      <div class="modal-actions"><button type="button" id="cancelModal" class="secondary-btn">Cancel</button><button type="submit" class="primary-btn">Save product</button></div>
+    </form>
   </div>
+</div>
 
-  <div id="modal" class="modal hidden">
-    <div class="modal-backdrop" data-close></div>
-    <div class="modal-card">
-      <div class="modal-head"><div><span class="eyebrow" id="modalEyebrow">PRODUCT</span><h2 id="modalTitle">Add product</h2></div><button class="close" data-close>×</button></div>
-      <form id="productForm">
-        <input type="hidden" id="productId">
-        <div class="photo-upload">
-          <div id="photoPreview" class="photo-preview">＋</div>
-          <div><strong>Product photo</strong><p>Use your camera or choose an image.</p><label class="secondary file-btn">Choose photo<input id="photo" type="file" accept="image/*" capture="environment"></label><button id="removePhoto" type="button" class="text-btn hidden">Remove photo</button></div>
-        </div>
-        <div class="form-grid">
-          <label>Item name<input id="itemName" required placeholder="e.g. Premium T-Shirt"></label>
-          <label>SKU<input id="sku" placeholder="e.g. TS-001"></label>
-          <label>Category<input id="category" placeholder="e.g. Clothing"></label>
-          <label>Location<input id="location" placeholder="e.g. Rack A1"></label>
-          <label>Quantity<input id="quantity" type="number" min="0" value="0" required></label>
-          <label>Minimum stock<input id="minStock" type="number" min="0" value="5"></label>
-          <label>Purchase price<input id="purchasePrice" type="number" min="0" step="0.01" value="0"></label>
-          <label>Selling price<input id="sellingPrice" type="number" min="0" step="0.01" value="0"></label>
-        </div>
-        <div class="modal-actions"><button type="button" class="secondary" data-close>Cancel</button><button class="primary" type="submit">Save product</button></div>
-      </form>
-    </div>
-  </div>
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="script.js"></script>
+<script src="script.js"></script>
 </body>
 </html>
