@@ -48,9 +48,28 @@ function filtered(){
   return products.filter(p=>(!q||[p.item_name,p.sku,p.category,p.location].join(" ").toLowerCase().includes(q))&&(!cat||p.category===cat)&&(!st||status(p)[0]===st));
 }
 function renderTable(){
-  const list=filtered();$("resultCount").textContent=`${list.length} ${list.length===1?"product":"products"}`;$("emptyState").classList.toggle("hidden",list.length!==0);
-  $("productBody").innerHTML=list.map(p=>{const [cls,label]=status(p);return `<tr><td><div class="product-cell">${p.image_url?`<img class="row-photo" src="${p.image_url}" alt="">`:`<div class="row-photo"></div>`}<div><strong>${esc(p.item_name)}</strong><small>${esc(p.location||"No location")}</small></div></div></td><td>${esc(p.sku||"—")}</td><td>${esc(p.category||"—")}</td><td><strong>${Number(p.quantity||0)}</strong> / min ${Number(p.min_stock||0)}</td><td>${money(p.purchase_price)}</td><td>${money(p.selling_price)}</td><td><span class="status ${cls}">${label}</span></td><td><div class="row-actions"><button class="icon-btn" onclick="editProduct('${p.id}')">✎</button><button class="icon-btn" onclick="deleteProduct('${p.id}')">×</button></div></td></tr>`}).join("");
+  const list=filtered();
+  $("resultCount").textContent=`${list.length} ${list.length===1?"product":"products"}`;
+  $("emptyState").classList.toggle("hidden",list.length!==0);
+  $("productBody").innerHTML=list.map(p=>{
+    const [cls,label]=status(p);
+    return `<tr><td><div class="product-cell">${p.image_url?`<img class="row-photo" src="${p.image_url}" alt="">`:`<div class="row-photo"></div>`}<div><strong>${esc(p.item_name)}</strong><small>${esc(p.location||"No location")}</small></div></div></td><td>${esc(p.sku||"—")}</td><td>${esc(p.category||"—")}</td><td><div class="stock-adjust"><button type="button" onclick="adjustQuantity('${p.id}',-1)" aria-label="Reduce quantity">−</button><strong>${Number(p.quantity||0)}</strong><button type="button" onclick="adjustQuantity('${p.id}',1)" aria-label="Add quantity">+</button></div><small style="display:block;color:#9a9187;margin-top:4px">min ${Number(p.min_stock||0)}</small></td><td>${money(p.purchase_price)}</td><td>${money(p.selling_price)}</td><td><span class="status ${cls}">${label}</span></td><td><div class="row-actions"><button class="icon-btn" onclick="editProduct('${p.id}')">✎</button><button class="icon-btn" onclick="deleteProduct('${p.id}')">×</button></div></td></tr>`
+  }).join("");
 }
+async function adjustQuantity(id,delta){
+  if(!session){toast("Sign in to change stock.",true);openAuthModal("login");return}
+  const p=products.find(x=>x.id===id);
+  if(!p)return;
+  const next=Math.max(0,Number(p.quantity||0)+delta);
+  if(next===Number(p.quantity||0))return;
+  const {error}=await db.from("products").update({quantity:next,updated_at:new Date().toISOString()}).eq("id",id);
+  if(error){toast(error.message,true);return}
+  p.quantity=next;
+  renderAll();
+  toast(delta>0?"1 unit added":"1 unit removed");
+}
+window.adjustQuantity=adjustQuantity;
+
 function renderAnalytics(){
   const purchase=products.reduce((a,p)=>a+Number(p.quantity||0)*Number(p.purchase_price||0),0),sales=products.reduce((a,p)=>a+Number(p.quantity||0)*Number(p.selling_price||0),0);
   $("aPurchase").textContent=money(purchase);$("aSales").textContent=money(sales);$("aMargin").textContent=money(sales-purchase);
@@ -95,6 +114,86 @@ async function deleteProduct(id){const p=products.find(x=>x.id===id);if(!p||!con
 window.editProduct=id=>openModal(products.find(p=>p.id===id));
 window.deleteProduct=deleteProduct;
 
+
+let barcodeScanner=null;
+let barcodeTarget="search";
+function stopBarcodeScanner(){
+  if(barcodeScanner){
+    barcodeScanner.stop().catch(()=>{});
+    barcodeScanner.clear().catch(()=>{});
+    barcodeScanner=null;
+  }
+}
+async function openBarcodeScanner(target="search"){
+  barcodeTarget=target;
+  $("barcodeModal").classList.remove("hidden");
+  $("barcodeScanStatus").textContent="Starting camera…";
+  $("barcodeManual").value=target==="product"?$("sku").value.trim():"";
+  if(!window.Html5Qrcode){
+    $("barcodeScanStatus").textContent="Camera scanner is unavailable. Enter the barcode manually below.";
+    return;
+  }
+  stopBarcodeScanner();
+  barcodeScanner=new Html5Qrcode("barcodeReader");
+  try{
+    await barcodeScanner.start(
+      {facingMode:"environment"},
+      {fps:10,qrbox:{width:260,height:140}},
+      async decodedText=>{ await handleScannedBarcode(decodedText); },
+      ()=>{}
+    );
+    $("barcodeScanStatus").textContent="Point the camera at a barcode. It will be detected automatically.";
+  }catch(err){
+    $("barcodeScanStatus").textContent="Camera could not start. Check camera permission or enter the barcode manually.";
+  }
+}
+async function handleScannedBarcode(code){
+  code=String(code||"").trim();
+  if(!code)return;
+  stopBarcodeScanner();
+  $("barcodeScanStatus").textContent=`Barcode detected: ${code}`;
+  if(barcodeTarget==="product"){
+    $("sku").value=code;
+    closeBarcodeScanner();
+    toast("Barcode added to product");
+    return;
+  }
+  closeBarcodeScanner();
+  go("inventory");
+  $("searchInput").value=code;
+  renderTable();
+  const match=products.find(p=>String(p.sku||"").trim()===code);
+  if(match){
+    toast(`${match.item_name} found`);
+  }else{
+    toast("Barcode not found. You can add it as a new product.");
+    openModal();
+    $("sku").value=code;
+  }
+}
+function closeBarcodeScanner(){stopBarcodeScanner();$("barcodeModal").classList.add("hidden");}
+function openCreateBarcode(value=""){
+  $("createBarcodeModal").classList.remove("hidden");
+  const fallback=`SP${Date.now().toString().slice(-10)}`;
+  $("barcodeValue").value=String(value||"").trim()||fallback;
+  renderGeneratedBarcode();
+}
+function closeCreateBarcode(){$("createBarcodeModal").classList.add("hidden");}
+function renderGeneratedBarcode(){
+  const value=$("barcodeValue").value.trim();
+  if(!value)return;
+  if(!window.JsBarcode){toast("Barcode generator is unavailable. Check your internet connection.",true);return;}
+  try{
+    JsBarcode("#barcodeSvg",value,{format:"CODE128",displayValue:true,lineColor:"#1d1d1f",width:2,height:90,margin:12,fontSize:14});
+  }catch(err){toast("Invalid barcode value.",true);}
+}
+function downloadGeneratedBarcode(){
+  renderGeneratedBarcode();
+  const svg=$("barcodeSvg");
+  if(!svg.innerHTML)return;
+  const blob=new Blob([new XMLSerializer().serializeToString(svg)],{type:"image/svg+xml;charset=utf-8"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`stockpilot-barcode-${$("barcodeValue").value.trim()||"code"}.svg`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
 function openAuthModal(mode="login"){
   $("authModal").classList.remove("hidden");
   $("authLoginPanel").classList.toggle("hidden",mode!=="login");
@@ -153,7 +252,23 @@ $("authForm").onsubmit=async e=>{e.preventDefault();const email=$("authEmail").v
 $("addTopBtn").onclick=()=>session?openModal():openAuthModal("login");
 $("closeModal").onclick=closeModal;$("cancelModal").onclick=closeModal;$("modal-backdrop")?.addEventListener("click",closeModal);
 $("productForm").onsubmit=saveProduct;
-$("productPhoto").onchange=e=>{const f=e.target.files[0];if(f){currentPhoto=f;const u=URL.createObjectURL(f);$("photoPreview").innerHTML=`<img src="${u}" alt="">`}};
+$("choosePhotoBtn").onclick=()=>$("productPhoto").click();
+$("productPhoto").onchange=e=>{const f=e.target.files[0];if(f){currentPhoto=f;const u=URL.createObjectURL(f);$("photoPreview").innerHTML=`<img src="${u}" alt="">`;$("photoStatus").textContent=`${(f.size/1024/1024).toFixed(1)} MB selected`}};
+$("qtyMinus").onclick=()=>$("quantity").value=Math.max(0,(Number($("quantity").value)||0)-1);
+$("qtyPlus").onclick=()=>$("quantity").value=Math.max(0,(Number($("quantity").value)||0)+1);
+$("scanBarcodeBtn").onclick=()=>openBarcodeScanner("search");
+$("scanProductBarcodeBtn").onclick=()=>openBarcodeScanner("product");
+$("createBarcodeBtn").onclick=()=>openCreateBarcode($("sku").value.trim());
+$("closeBarcodeModal").onclick=closeBarcodeScanner;
+$("cancelBarcode").onclick=closeBarcodeScanner;
+$("barcodeModal").querySelector(".modal-backdrop").onclick=closeBarcodeScanner;
+$("barcodeManualBtn").onclick=()=>handleScannedBarcode($("barcodeManual").value);
+$("barcodeManual").addEventListener("keydown",e=>{if(e.key==="Enter")handleScannedBarcode(e.target.value)});
+$("closeCreateBarcode").onclick=closeCreateBarcode;
+$("createBarcodeModal").querySelector(".modal-backdrop").onclick=closeCreateBarcode;
+$("barcodeValue").addEventListener("input",renderGeneratedBarcode);
+$("downloadBarcode").onclick=downloadGeneratedBarcode;
+$("useBarcodeValue").onclick=()=>{$("sku").value=$("barcodeValue").value.trim();closeCreateBarcode();toast("Barcode added to product")};
 ["searchInput","categoryFilter","statusFilter"].forEach(id=>$(id).addEventListener("input",renderTable));
 document.querySelectorAll(".nav-item").forEach(b=>b.onclick=()=>go(b.dataset.page));
 document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>go(b.dataset.go));
