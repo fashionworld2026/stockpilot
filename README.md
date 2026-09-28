@@ -22,3 +22,18 @@ Replace the contents of your existing `~/stockpilot` project while preserving `.
 
 ## Note
 The browser-side Supabase publishable key is intentionally included. Keep Row Level Security enabled and never put a Supabase service-role/secret key in frontend code.
+
+
+## Google login
+
+The Elegant Edition includes a **Continue with Google** button using Supabase Auth.
+
+Before using it:
+1. In Supabase, open **Authentication → Providers → Google** and enable Google.
+2. Add your Google OAuth Client ID and Client Secret.
+3. In Supabase **Authentication → URL Configuration**, add your production redirect URL:
+   `https://fashionworld2026.github.io/stockpilot/`
+4. For local testing, also add:
+   `http://localhost:8000/`
+
+The frontend only contains the Supabase publishable key. Never place a Google client secret or Supabase service-role key in the frontend.

@@ -96,6 +96,14 @@ window.editProduct=id=>openModal(products.find(p=>p.id===id));
 window.deleteProduct=deleteProduct;
 
 $("toggleAuth").onclick=()=>{isSignup=!isSignup;$("authSubmit").textContent=isSignup?"Create account":"Sign in";$("toggleAuth").textContent=isSignup?"Already have an account? Sign in":"Create a new account"};
+$("googleBtn").onclick=async()=>{
+  const redirectTo=window.location.origin+window.location.pathname;
+  const {error}=await db.auth.signInWithOAuth({
+    provider:"google",
+    options:{redirectTo}
+  });
+  if(error)toast(error.message,true);
+};
 $("authForm").onsubmit=async e=>{e.preventDefault();const email=$("authEmail").value.trim(),password=$("authPassword").value;if(isSignup){const {error}=await db.auth.signUp({email,password});if(error)toast(error.message,true);else toast("Account created. Check your email if confirmation is required.")}else{const {error}=await db.auth.signInWithPassword({email,password});if(error)toast(error.message,true)}};
 $("signOutBtn").onclick=()=>db.auth.signOut();
 $("addTopBtn").onclick=()=>openModal();
