@@ -6,6 +6,7 @@ let products=[],session=null,editingId=null,currentPhoto=null,isSignup=false,def
 
 const $=id=>document.getElementById(id);
 const money=n=>new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format(Number(n)||0);
+const productName=p=>String(p?.item_name??p?.name??p?.product_name??p?.itemName??"");
 const esc=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
 function toast(msg,error=false){$("toast").innerHTML=`<div class="toast-message ${error?"toast-error":""}">${esc(msg)}</div>`;setTimeout(()=>$("toast").innerHTML="",2600)}
 function status(p){if(Number(p.quantity)<=0)return["out","Out of stock"];if(Number(p.quantity)<=Number(p.min_stock||0))return["low","Low stock"];return["in","In stock"]}
@@ -16,7 +17,7 @@ async function loadProducts(){
   setSync(false);
   const {data,error}=await db.from("products").select("*").order("created_at",{ascending:false});
   if(error){toast(error.message,true);setSync(false);return}
-  products=data||[];
+  products=(data||[]).map(p=>({...p,item_name:productName(p)}));
   await hydrateImages();
   setSync(true);renderAll();
 }
@@ -101,7 +102,7 @@ function go(page){
 function openModal(p=null){
   editingId=p?.id||null;currentPhoto=null;$("modalTitle").textContent=p?"Edit product":"Add product";$("productForm").reset();$("productId").value=p?.id||"";
   if(p){
-    $("itemName").value=p.item_name??"";
+    $("itemName").value=productName(p);
     $("category").value=p.category??"";
     $("location").value=p.location??"";
     $("quantity").value=p.quantity??0;

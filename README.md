@@ -13,3 +13,6 @@ Mobile photo improvements:
 
 - Increase/decrease stock directly from the Inventory table.
 - Use + / − controls in the Add Product form.
+
+
+Edit form fix: existing product names are preserved and loaded from the inventory record, with compatibility fallbacks for older name fields.
