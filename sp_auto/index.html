@@ -16,57 +16,8 @@
 <body>
 <div id="toast"></div>
 
-<section id="authView" class="auth-shell">
-  <div class="auth-card">
-    <div class="brand-mark">S</div>
-    <p class="eyebrow">INVENTORY, REFINED</p>
-    <h1>StockPilot</h1>
-    <p class="auth-copy">A calm, elegant workspace for keeping your products, stock and business beautifully organized.</p>
-    <form id="authForm">
-      <label>Email<input id="authEmail" type="email" autocomplete="email" required placeholder="you@example.com"></label>
-      <label>Password<input id="authPassword" type="password" autocomplete="current-password" required placeholder="••••••••"></label>
-      <button class="primary-btn" type="submit" id="authSubmit">Sign in</button>
-    </form>
-    <div class="auth-divider"><span>or</span></div>
-    <button class="google-btn" id="googleBtn" type="button">
-      <span class="google-icon">G</span>
-      Continue with Google
-    </button>
-    <button class="text-btn" id="forgotPasswordBtn" type="button">Forgot password?</button>
-    <button class="text-btn" id="toggleAuth" type="button">Create a new account</button>
-    <p class="auth-note">Your inventory is securely synchronized through your StockPilot cloud account.</p>
-  </div>
-</section>
+<div id="appView" class="app">
 
-<section id="forgotView" class="auth-shell hidden">
-  <div class="auth-card">
-    <div class="brand-mark">S</div>
-    <p class="eyebrow">ACCOUNT RECOVERY</p>
-    <h1>Reset your password</h1>
-    <p class="auth-copy">Enter your StockPilot email and we'll send you a secure password-reset link.</p>
-    <form id="forgotForm">
-      <label>Email<input id="forgotEmail" type="email" autocomplete="email" required placeholder="you@example.com"></label>
-      <button class="primary-btn" type="submit">Send reset link</button>
-    </form>
-    <button class="text-btn" id="backToLoginBtn" type="button">Back to sign in</button>
-  </div>
-</section>
-
-<section id="resetView" class="auth-shell hidden">
-  <div class="auth-card">
-    <div class="brand-mark">S</div>
-    <p class="eyebrow">SECURE RECOVERY</p>
-    <h1>Choose a new password</h1>
-    <p class="auth-copy">Set a new password for your StockPilot account.</p>
-    <form id="resetForm">
-      <label>New password<input id="newPassword" type="password" autocomplete="new-password" minlength="6" required placeholder="••••••••"></label>
-      <label>Confirm password<input id="confirmPassword" type="password" autocomplete="new-password" minlength="6" required placeholder="••••••••"></label>
-      <button class="primary-btn" type="submit">Update password</button>
-    </form>
-  </div>
-</section>
-
-<div id="appView" class="app hidden">
   <aside class="sidebar">
     <div class="sidebar-top">
       <div class="logo-row"><div class="mini-mark">S</div><span>StockPilot</span></div>
@@ -79,8 +30,8 @@
       <button class="nav-item" data-page="settings"><span>⚙</span> Settings</button>
     </nav>
     <div class="sidebar-bottom">
-      <div class="sync-pill"><span id="syncDot"></span><span id="syncText">Cloud synced</span></div>
-      <button id="signOutBtn" class="quiet-btn">Sign out</button>
+      <div class="sync-pill"><span id="syncDot"></span><span id="syncText">Checking account…</span></div>
+      <button id="accountBtn" class="quiet-btn">Sign in to sync</button>
     </div>
   </aside>
 
@@ -153,12 +104,18 @@
 
     <section id="settingsPage" class="page hidden">
       <div class="panel settings-panel">
-        <p class="eyebrow">ACCOUNT</p><h3>Your StockPilot account</h3>
+        <p class="eyebrow">ACCOUNT</p><h3>StockPilot account</h3>
+        <div class="setting-row"><span>Status</span><strong id="accountStatus">Checking…</strong></div>
         <div class="setting-row"><span>Email</span><strong id="accountEmail">—</strong></div>
-        <div class="setting-row"><span>Cloud database</span><strong>Connected</strong></div>
-        <div class="setting-row"><span>Product photos</span><strong>Cloud storage</strong></div>
-        <div class="setting-row"><span>App version</span><strong>Elegant Edition</strong></div>
-        <button id="refreshBtn" class="secondary-btn">Refresh from cloud</button>
+        <div class="setting-row"><span>Cloud database</span><strong id="cloudStatus">Sign in required</strong></div>
+        <div class="setting-row"><span>Product photos</span><strong>Private cloud storage</strong></div>
+        <div class="setting-row"><span>App version</span><strong>Elegant Edition · Direct Start</strong></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px">
+          <button id="settingsAccountBtn" class="primary-btn">Sign in to sync</button>
+          <button id="refreshBtn" class="secondary-btn">Refresh from cloud</button>
+          <button id="settingsSignOutBtn" class="secondary-btn hidden">Sign out</button>
+        </div>
+        <p class="auth-note" style="margin-top:14px">StockPilot opens directly. Your existing secure Supabase account is used automatically when a session is already present. Sign in from Settings only when a session is needed.</p>
       </div>
     </section>
   </main>
@@ -170,6 +127,42 @@
   <button class="nav-item" data-page="analytics"><span>◌</span>Insights</button>
   <button class="nav-item" data-page="settings"><span>⚙</span>More</button>
 </nav>
+
+<div id="authModal" class="modal hidden">
+  <div class="modal-backdrop"></div>
+  <div class="modal-card" style="max-width:460px">
+    <div class="modal-head"><div><p class="eyebrow">SECURE CLOUD ACCESS</p><h3 id="authModalTitle">Sign in to StockPilot</h3></div><button id="closeAuthModal" class="icon-btn">×</button></div>
+    <div id="authLoginPanel">
+      <form id="authForm">
+        <label>Email<input id="authEmail" type="email" autocomplete="email" required placeholder="you@example.com"></label>
+        <label>Password<input id="authPassword" type="password" autocomplete="current-password" required placeholder="••••••••"></label>
+        <button class="primary-btn" style="width:100%;margin-top:8px" type="submit" id="authSubmit">Sign in</button>
+      </form>
+      <div class="auth-divider"><span>or</span></div>
+      <button class="google-btn" id="googleBtn" type="button"><span class="google-icon">G</span> Continue with Google</button>
+      <div style="display:flex;justify-content:space-between;gap:12px;margin-top:12px;flex-wrap:wrap">
+        <button class="text-btn" id="forgotPasswordBtn" type="button">Forgot password?</button>
+        <button class="text-btn" id="toggleAuth" type="button">Create a new account</button>
+      </div>
+    </div>
+    <div id="forgotPanel" class="hidden">
+      <p class="auth-copy">Enter your StockPilot email and we'll send you a secure password-reset link.</p>
+      <form id="forgotForm">
+        <label>Email<input id="forgotEmail" type="email" autocomplete="email" required placeholder="you@example.com"></label>
+        <button class="primary-btn" style="width:100%;margin-top:8px" type="submit">Send reset link</button>
+      </form>
+      <button class="text-btn" id="backToLoginBtn" type="button">Back to sign in</button>
+    </div>
+    <div id="resetPanel" class="hidden">
+      <p class="auth-copy">Set a new password for your StockPilot account.</p>
+      <form id="resetForm">
+        <label>New password<input id="newPassword" type="password" autocomplete="new-password" minlength="6" required placeholder="••••••••"></label>
+        <label>Confirm password<input id="confirmPassword" type="password" autocomplete="new-password" minlength="6" required placeholder="••••••••"></label>
+        <button class="primary-btn" style="width:100%;margin-top:8px" type="submit">Update password</button>
+      </form>
+    </div>
+  </div>
+</div>
 
 <div id="productModal" class="modal hidden">
   <div class="modal-backdrop"></div>

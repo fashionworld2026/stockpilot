@@ -81,7 +81,7 @@ async function uploadPhoto(file,id){
   if(error)throw error;return path;
 }
 async function saveProduct(e){
-  e.preventDefault();if(!session)return;
+  e.preventDefault();if(!session){toast("Sign in to save inventory.",true);openAuthModal("login");return;}
   const id=editingId||crypto.randomUUID();
   const payload={user_id:session.user.id,item_name:$("itemName").value.trim(),sku:$("sku").value.trim(),category:$("category").value.trim(),location:$("location").value.trim(),quantity:Number($("quantity").value)||0,min_stock:Number($("minStock").value)||0,purchase_price:Number($("purchasePrice").value)||0,selling_price:Number($("sellingPrice").value)||0,updated_at:new Date().toISOString()};
   try{
@@ -95,17 +95,33 @@ async function deleteProduct(id){const p=products.find(x=>x.id===id);if(!p||!con
 window.editProduct=id=>openModal(products.find(p=>p.id===id));
 window.deleteProduct=deleteProduct;
 
-function showAuthScreen(view){
-  $("authView").classList.add("hidden");
-  $("forgotView").classList.add("hidden");
-  $("resetView").classList.add("hidden");
-  $(view).classList.remove("hidden");
+function openAuthModal(mode="login"){
+  $("authModal").classList.remove("hidden");
+  $("authLoginPanel").classList.toggle("hidden",mode!=="login");
+  $("forgotPanel").classList.toggle("hidden",mode!=="forgot");
+  $("resetPanel").classList.toggle("hidden",mode!=="reset");
+  $("authModalTitle").textContent=mode==="forgot"?"Reset your password":mode==="reset"?"Choose a new password":(isSignup?"Create your account":"Sign in to StockPilot");
 }
-$("forgotPasswordBtn").onclick=()=>{
-  $("forgotEmail").value=$("authEmail").value.trim();
-  showAuthScreen("forgotView");
-};
-$("backToLoginBtn").onclick=()=>showAuthScreen("authView");
+function closeAuthModal(){$("authModal").classList.add("hidden");}
+function updateAccountUI(){
+  const signed=!!session;
+  $("accountEmail").textContent=signed?(session.user.email||"Signed in") : "—";
+  $("accountStatus").textContent=signed?"Signed in":"Not signed in";
+  $("cloudStatus").textContent=signed?"Connected":"Sign in required";
+  $("syncText").textContent=signed?"Cloud synced":"Sign in to sync";
+  $("syncDot").style.background=signed?"#4f775d":"#a5793e";
+  $("accountBtn").textContent=signed?"Sign out":"Sign in to sync";
+  $("settingsAccountBtn").textContent=signed?"Account signed in":"Sign in to sync";
+  $("settingsAccountBtn").disabled=signed;
+  $("settingsSignOutBtn").classList.toggle("hidden",!signed);
+}
+$("closeAuthModal").onclick=closeAuthModal;
+$("authModal").querySelector(".modal-backdrop").onclick=closeAuthModal;
+$("accountBtn").onclick=()=>session?db.auth.signOut():openAuthModal("login");
+$("settingsAccountBtn").onclick=()=>{if(!session)openAuthModal("login")};
+$("settingsSignOutBtn").onclick=()=>db.auth.signOut();
+$("forgotPasswordBtn").onclick=()=>{$("forgotEmail").value=$("authEmail").value.trim();openAuthModal("forgot");};
+$("backToLoginBtn").onclick=()=>openAuthModal("login");
 $("forgotForm").onsubmit=async e=>{
   e.preventDefault();
   const email=$("forgotEmail").value.trim();
@@ -113,66 +129,55 @@ $("forgotForm").onsubmit=async e=>{
   const {error}=await db.auth.resetPasswordForEmail(email,{redirectTo});
   if(error){toast(error.message,true);return}
   toast("Reset link sent. Check your email.");
-  showAuthScreen("authView");
+  openAuthModal("login");
 };
 $("resetForm").onsubmit=async e=>{
   e.preventDefault();
-  const p1=$("newPassword").value;
-  const p2=$("confirmPassword").value;
+  const p1=$("newPassword").value,p2=$("confirmPassword").value;
   if(p1!==p2){toast("Passwords do not match.",true);return}
   if(p1.length<6){toast("Password must be at least 6 characters.",true);return}
   const {error}=await db.auth.updateUser({password:p1});
   if(error){toast(error.message,true);return}
   recoveryMode=false;
-  $("newPassword").value="";
-  $("confirmPassword").value="";
+  $("newPassword").value=$("confirmPassword").value="";
   toast("Password updated successfully.");
-  showAuthScreen("authView");
+  closeAuthModal();
 };
-
-$("toggleAuth").onclick=()=>{isSignup=!isSignup;$("authSubmit").textContent=isSignup?"Create account":"Sign in";$("toggleAuth").textContent=isSignup?"Already have an account? Sign in":"Create a new account"};
+$("toggleAuth").onclick=()=>{isSignup=!isSignup;$("authSubmit").textContent=isSignup?"Create account":"Sign in";$("toggleAuth").textContent=isSignup?"Already have an account? Sign in":"Create a new account";$("authModalTitle").textContent=isSignup?"Create your account":"Sign in to StockPilot"};
 $("googleBtn").onclick=async()=>{
   const redirectTo=window.location.origin+window.location.pathname;
-  const {error}=await db.auth.signInWithOAuth({
-    provider:"google",
-    options:{redirectTo}
-  });
+  const {error}=await db.auth.signInWithOAuth({provider:"google",options:{redirectTo}});
   if(error)toast(error.message,true);
 };
-$("authForm").onsubmit=async e=>{e.preventDefault();const email=$("authEmail").value.trim(),password=$("authPassword").value;if(isSignup){const {error}=await db.auth.signUp({email,password});if(error)toast(error.message,true);else toast("Account created. Check your email if confirmation is required.")}else{const {error}=await db.auth.signInWithPassword({email,password});if(error)toast(error.message,true)}};
-$("signOutBtn").onclick=()=>db.auth.signOut();
-$("addTopBtn").onclick=()=>openModal();
+$("authForm").onsubmit=async e=>{e.preventDefault();const email=$("authEmail").value.trim(),password=$("authPassword").value;if(isSignup){const {error}=await db.auth.signUp({email,password});if(error)toast(error.message,true);else{toast("Account created. Check your email if confirmation is required.");closeAuthModal()}}else{const {error}=await db.auth.signInWithPassword({email,password});if(error)toast(error.message,true)}};
+$("addTopBtn").onclick=()=>session?openModal():openAuthModal("login");
 $("closeModal").onclick=closeModal;$("cancelModal").onclick=closeModal;$("modal-backdrop")?.addEventListener("click",closeModal);
 $("productForm").onsubmit=saveProduct;
 $("productPhoto").onchange=e=>{const f=e.target.files[0];if(f){currentPhoto=f;const u=URL.createObjectURL(f);$("photoPreview").innerHTML=`<img src="${u}" alt="">`}};
 ["searchInput","categoryFilter","statusFilter"].forEach(id=>$(id).addEventListener("input",renderTable));
 document.querySelectorAll(".nav-item").forEach(b=>b.onclick=()=>go(b.dataset.page));
 document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>go(b.dataset.go));
-$("refreshBtn").onclick=()=>loadProducts();
+$("refreshBtn").onclick=()=>session?loadProducts():openAuthModal("login");
 $("accountEmail").textContent="—";
 $("exportBtn").onclick=()=>{const rows=[["ID","Item Name","Category","SKU","Quantity","Purchase Price","Selling Price","Location","Min Stock","Created"],...products.map(p=>[p.id,p.item_name,p.category,p.sku,p.quantity,p.purchase_price,p.selling_price,p.location,p.min_stock,p.created_at])];const csv=rows.map(r=>r.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(",")).join("\n");const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download="stockpilot-inventory.csv";a.click()};
-$("importBtn").onclick=()=>$("csvFile").click();
-$("csvFile").onchange=async e=>{const f=e.target.files[0];if(!f)return;const text=await f.text(),lines=text.split(/\r?\n/).filter(Boolean);if(lines.length<2)return;const rows=lines.slice(1).map(x=>x.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g)?.map(v=>v.replace(/^"|"$/g,"").replace(/""/g,'"'))||[]);let added=0;for(const r of rows){if(!r[1])continue;const payload={user_id:session.user.id,item_name:r[1],category:r[2]||"",sku:r[3]||"",quantity:Number(r[4])||0,purchase_price:Number(r[5])||0,selling_price:Number(r[6])||0,location:r[7]||"",min_stock:Number(r[8])||0,created_at:r[9]||new Date().toISOString(),updated_at:new Date().toISOString()};const {error}=await db.from("products").insert(payload);if(!error)added++}await loadProducts();toast(`${added} products imported`)};
+$("importBtn").onclick=()=>session?$("csvFile").click():openAuthModal("login");
+$("csvFile").onchange=async e=>{if(!session){openAuthModal("login");return}const f=e.target.files[0];if(!f)return;const text=await f.text(),lines=text.split(/\r?\n/).filter(Boolean);if(lines.length<2)return;const rows=lines.slice(1).map(x=>x.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g)?.map(v=>v.replace(/^"|"$/g,"").replace(/""/g,'"'))||[]);let added=0;for(const r of rows){if(!r[1])continue;const payload={user_id:session.user.id,item_name:r[1],category:r[2]||"",sku:r[3]||"",quantity:Number(r[4])||0,purchase_price:Number(r[5])||0,selling_price:Number(r[6])||0,location:r[7]||"",min_stock:Number(r[8])||0,created_at:r[9]||new Date().toISOString(),updated_at:new Date().toISOString()};const {error}=await db.from("products").insert(payload);if(!error)added++}await loadProducts();toast(`${added} products imported`)};
 window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredPrompt=e;$("installBtn").classList.remove("hidden")});
 $("installBtn").onclick=async()=>{if(!deferredPrompt)return;deferredPrompt.prompt();deferredPrompt=null;$("installBtn").classList.add("hidden")};
 db.auth.onAuthStateChange(async(_event,s)=>{
   session=s;
+  updateAccountUI();
   if(_event==="PASSWORD_RECOVERY"){
     recoveryMode=true;
-    $("appView").classList.add("hidden");
-    showAuthScreen("resetView");
+    $("newPassword").value=$("confirmPassword").value="";
+    openAuthModal("reset");
     return;
   }
   if(s&&!recoveryMode){
-    $("authView").classList.add("hidden");
-    $("forgotView").classList.add("hidden");
-    $("resetView").classList.add("hidden");
-    $("appView").classList.remove("hidden");
-    $("accountEmail").textContent=s.user.email||"—";
+    closeAuthModal();
     await loadProducts();
   }else if(!s&&!recoveryMode){
-    $("appView").classList.add("hidden");
-    showAuthScreen("authView");
+    products=[];renderAll();
   }
 });
 (async()=>{
@@ -180,22 +185,13 @@ db.auth.onAuthStateChange(async(_event,s)=>{
   session=data.session;
   const hash=window.location.hash||"";
   const isRecovery=hash.includes("type=recovery")||hash.includes("access_token=")&&hash.includes("type=recovery");
+  updateAccountUI();
   if(isRecovery){
     recoveryMode=true;
-    $("appView").classList.add("hidden");
-    showAuthScreen("resetView");
+    openAuthModal("reset");
     return;
   }
-  if(session){
-    $("authView").classList.add("hidden");
-    $("forgotView").classList.add("hidden");
-    $("resetView").classList.add("hidden");
-    $("appView").classList.remove("hidden");
-    $("accountEmail").textContent=session.user.email||"—";
-    await loadProducts();
-  }else{
-    $("appView").classList.add("hidden");
-    showAuthScreen("authView");
-  }
+  if(session)await loadProducts();
+  else {products=[];renderAll();}
 })();
 if("serviceWorker"in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("service-worker.js").catch(()=>{}));
