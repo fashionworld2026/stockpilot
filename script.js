@@ -100,8 +100,17 @@ function go(page){
 }
 function openModal(p=null){
   editingId=p?.id||null;currentPhoto=null;$("modalTitle").textContent=p?"Edit product":"Add product";$("productForm").reset();$("productId").value=p?.id||"";
-  ["itemName","category","location","quantity","minStock","purchasePrice","sellingPrice"].forEach(k=>{if(p&&$(k))$(k).value=p[k]??""});
-  $("quantity").value=p?.quantity??0;$("minStock").value=p?.min_stock??5;$("purchasePrice").value=p?.purchase_price??0;$("sellingPrice").value=p?.selling_price??0;
+  if(p){
+    $("itemName").value=p.item_name??"";
+    $("category").value=p.category??"";
+    $("location").value=p.location??"";
+    $("quantity").value=p.quantity??0;
+    $("minStock").value=p.min_stock??5;
+    $("purchasePrice").value=p.purchase_price??0;
+    $("sellingPrice").value=p.selling_price??0;
+  }else{
+    $("quantity").value=0;$("minStock").value=5;$("purchasePrice").value=0;$("sellingPrice").value=0;
+  }
   $("photoPreview").innerHTML=p?.image_url?`<img src="${p.image_url}" alt="">`:"+";
   $("productModal").classList.remove("hidden");
 }
