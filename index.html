@@ -32,8 +32,37 @@
       <span class="google-icon">G</span>
       Continue with Google
     </button>
+    <button class="text-btn" id="forgotPasswordBtn" type="button">Forgot password?</button>
     <button class="text-btn" id="toggleAuth" type="button">Create a new account</button>
     <p class="auth-note">Your inventory is securely synchronized through your StockPilot cloud account.</p>
+  </div>
+</section>
+
+<section id="forgotView" class="auth-shell hidden">
+  <div class="auth-card">
+    <div class="brand-mark">S</div>
+    <p class="eyebrow">ACCOUNT RECOVERY</p>
+    <h1>Reset your password</h1>
+    <p class="auth-copy">Enter your StockPilot email and we'll send you a secure password-reset link.</p>
+    <form id="forgotForm">
+      <label>Email<input id="forgotEmail" type="email" autocomplete="email" required placeholder="you@example.com"></label>
+      <button class="primary-btn" type="submit">Send reset link</button>
+    </form>
+    <button class="text-btn" id="backToLoginBtn" type="button">Back to sign in</button>
+  </div>
+</section>
+
+<section id="resetView" class="auth-shell hidden">
+  <div class="auth-card">
+    <div class="brand-mark">S</div>
+    <p class="eyebrow">SECURE RECOVERY</p>
+    <h1>Choose a new password</h1>
+    <p class="auth-copy">Set a new password for your StockPilot account.</p>
+    <form id="resetForm">
+      <label>New password<input id="newPassword" type="password" autocomplete="new-password" minlength="6" required placeholder="••••••••"></label>
+      <label>Confirm password<input id="confirmPassword" type="password" autocomplete="new-password" minlength="6" required placeholder="••••••••"></label>
+      <button class="primary-btn" type="submit">Update password</button>
+    </form>
   </div>
 </section>
 

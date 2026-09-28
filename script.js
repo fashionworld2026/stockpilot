@@ -2,7 +2,7 @@ const SUPABASE_URL="https://dcrzycefzfrcmbqcecmm.supabase.co";
 const SUPABASE_KEY="sb_publishable_yEJVgMqnuf_Eyj5IKvAPJQ_VAQqa2y5";
 const {createClient}=window.supabase;
 const db=createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
-let products=[],session=null,editingId=null,currentPhoto=null,isSignup=false,deferredPrompt=null;
+let products=[],session=null,editingId=null,currentPhoto=null,isSignup=false,deferredPrompt=null,recoveryMode=false;
 
 const $=id=>document.getElementById(id);
 const money=n=>new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format(Number(n)||0);
@@ -95,6 +95,41 @@ async function deleteProduct(id){const p=products.find(x=>x.id===id);if(!p||!con
 window.editProduct=id=>openModal(products.find(p=>p.id===id));
 window.deleteProduct=deleteProduct;
 
+function showAuthScreen(view){
+  $("authView").classList.add("hidden");
+  $("forgotView").classList.add("hidden");
+  $("resetView").classList.add("hidden");
+  $(view).classList.remove("hidden");
+}
+$("forgotPasswordBtn").onclick=()=>{
+  $("forgotEmail").value=$("authEmail").value.trim();
+  showAuthScreen("forgotView");
+};
+$("backToLoginBtn").onclick=()=>showAuthScreen("authView");
+$("forgotForm").onsubmit=async e=>{
+  e.preventDefault();
+  const email=$("forgotEmail").value.trim();
+  const redirectTo=window.location.origin+window.location.pathname;
+  const {error}=await db.auth.resetPasswordForEmail(email,{redirectTo});
+  if(error){toast(error.message,true);return}
+  toast("Reset link sent. Check your email.");
+  showAuthScreen("authView");
+};
+$("resetForm").onsubmit=async e=>{
+  e.preventDefault();
+  const p1=$("newPassword").value;
+  const p2=$("confirmPassword").value;
+  if(p1!==p2){toast("Passwords do not match.",true);return}
+  if(p1.length<6){toast("Password must be at least 6 characters.",true);return}
+  const {error}=await db.auth.updateUser({password:p1});
+  if(error){toast(error.message,true);return}
+  recoveryMode=false;
+  $("newPassword").value="";
+  $("confirmPassword").value="";
+  toast("Password updated successfully.");
+  showAuthScreen("authView");
+};
+
 $("toggleAuth").onclick=()=>{isSignup=!isSignup;$("authSubmit").textContent=isSignup?"Create account":"Sign in";$("toggleAuth").textContent=isSignup?"Already have an account? Sign in":"Create a new account"};
 $("googleBtn").onclick=async()=>{
   const redirectTo=window.location.origin+window.location.pathname;
@@ -120,6 +155,47 @@ $("importBtn").onclick=()=>$("csvFile").click();
 $("csvFile").onchange=async e=>{const f=e.target.files[0];if(!f)return;const text=await f.text(),lines=text.split(/\r?\n/).filter(Boolean);if(lines.length<2)return;const rows=lines.slice(1).map(x=>x.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g)?.map(v=>v.replace(/^"|"$/g,"").replace(/""/g,'"'))||[]);let added=0;for(const r of rows){if(!r[1])continue;const payload={user_id:session.user.id,item_name:r[1],category:r[2]||"",sku:r[3]||"",quantity:Number(r[4])||0,purchase_price:Number(r[5])||0,selling_price:Number(r[6])||0,location:r[7]||"",min_stock:Number(r[8])||0,created_at:r[9]||new Date().toISOString(),updated_at:new Date().toISOString()};const {error}=await db.from("products").insert(payload);if(!error)added++}await loadProducts();toast(`${added} products imported`)};
 window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredPrompt=e;$("installBtn").classList.remove("hidden")});
 $("installBtn").onclick=async()=>{if(!deferredPrompt)return;deferredPrompt.prompt();deferredPrompt=null;$("installBtn").classList.add("hidden")};
-db.auth.onAuthStateChange(async(_event,s)=>{session=s;$("authView").classList.toggle("hidden",!!s);$("appView").classList.toggle("hidden",!s);if(s){$("accountEmail").textContent=s.user.email||"—";await loadProducts()}});
-(async()=>{const {data}=await db.auth.getSession();session=data.session;$("authView").classList.toggle("hidden",!!session);$("appView").classList.toggle("hidden",!session);if(session){$("accountEmail").textContent=session.user.email||"—";await loadProducts()}})();
+db.auth.onAuthStateChange(async(_event,s)=>{
+  session=s;
+  if(_event==="PASSWORD_RECOVERY"){
+    recoveryMode=true;
+    $("appView").classList.add("hidden");
+    showAuthScreen("resetView");
+    return;
+  }
+  if(s&&!recoveryMode){
+    $("authView").classList.add("hidden");
+    $("forgotView").classList.add("hidden");
+    $("resetView").classList.add("hidden");
+    $("appView").classList.remove("hidden");
+    $("accountEmail").textContent=s.user.email||"—";
+    await loadProducts();
+  }else if(!s&&!recoveryMode){
+    $("appView").classList.add("hidden");
+    showAuthScreen("authView");
+  }
+});
+(async()=>{
+  const {data}=await db.auth.getSession();
+  session=data.session;
+  const hash=window.location.hash||"";
+  const isRecovery=hash.includes("type=recovery")||hash.includes("access_token=")&&hash.includes("type=recovery");
+  if(isRecovery){
+    recoveryMode=true;
+    $("appView").classList.add("hidden");
+    showAuthScreen("resetView");
+    return;
+  }
+  if(session){
+    $("authView").classList.add("hidden");
+    $("forgotView").classList.add("hidden");
+    $("resetView").classList.add("hidden");
+    $("appView").classList.remove("hidden");
+    $("accountEmail").textContent=session.user.email||"—";
+    await loadProducts();
+  }else{
+    $("appView").classList.add("hidden");
+    showAuthScreen("authView");
+  }
+})();
 if("serviceWorker"in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("service-worker.js").catch(()=>{}));

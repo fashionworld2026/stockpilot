@@ -37,3 +37,14 @@ Before using it:
    `http://localhost:8000/`
 
 The frontend only contains the Supabase publishable key. Never place a Google client secret or Supabase service-role key in the frontend.
+
+
+## Password reset
+
+The login screen now includes **Forgot password?**. Users enter their account email and receive a Supabase password-reset email. The reset link returns to the StockPilot app, where they can choose a new password.
+
+For Supabase, make sure the production URL is allowed under **Authentication → URL Configuration**:
+
+`https://fashionworld2026.github.io/stockpilot/`
+
+The same URL is used by the app as the password-reset redirect target.
