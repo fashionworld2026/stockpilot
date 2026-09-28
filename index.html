@@ -181,7 +181,8 @@
   <div class="modal-backdrop"></div>
   <div class="modal-card barcode-card">
     <div class="modal-head"><div><p class="eyebrow">BARCODE</p><h3>Create barcode</h3></div><button id="closeCreateBarcode" class="icon-btn" type="button">×</button></div>
-    <label>Barcode value<input id="barcodeValue" inputmode="text" autocomplete="off" placeholder="Enter SKU or barcode"></label>
+    <label>Custom barcode value<input id="barcodeValue" inputmode="text" autocomplete="off" placeholder="e.g. SP-TSHIRT-001"></label>
+    <div class="barcode-custom-row"><button type="button" id="generateCustomBarcode" class="secondary-btn">✨ Generate custom code</button><span class="field-help">Use letters, numbers or dashes.</span></div>
     <div class="barcode-preview"><svg id="barcodeSvg"></svg></div>
     <div class="modal-actions"><button id="downloadBarcode" class="secondary-btn" type="button">Save barcode</button><button id="useBarcodeValue" class="primary-btn" type="button">Use in product</button></div>
   </div>
@@ -199,7 +200,7 @@
       </div>
       <div class="form-grid">
         <label>Product name<input id="itemName" required placeholder="e.g. Premium T-Shirt"></label>
-        <label>SKU / Barcode<div class="field-with-action"><input id="sku" inputmode="text" autocomplete="off" placeholder="e.g. 8901234567890"><button type="button" id="scanProductBarcodeBtn" class="icon-btn" title="Scan barcode">▣</button><button type="button" id="createBarcodeBtn" class="icon-btn" title="Create barcode">▥</button></div><small class="field-help">Use the product SKU or barcode number. Scan or create a barcode from this value.</small></label>
+        <label>SKU / Barcode<div class="field-with-action"><input id="sku" inputmode="text" autocomplete="off" placeholder="e.g. 8901234567890"><button type="button" id="scanProductBarcodeBtn" class="icon-btn" title="Scan barcode">▣</button><button type="button" id="createBarcodeBtn" class="icon-btn" title="Create custom barcode">▥</button></div><small class="field-help">Use the product SKU or barcode number. Scan or create a barcode from this value.</small></label>
         <label>Category<input id="category" placeholder="Clothing"></label>
         <label>Location<input id="location" placeholder="Rack A1"></label>
         <label>Quantity<div class="quantity-stepper"><button type="button" id="qtyMinus" class="qty-btn">−</button><input id="quantity" type="number" min="0" value="0" required><button type="button" id="qtyPlus" class="qty-btn">+</button></div></label>

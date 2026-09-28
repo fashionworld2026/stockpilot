@@ -204,9 +204,18 @@ async function handleScannedBarcode(code){
   }
 }
 function closeBarcodeScanner(){stopBarcodeScanner();$("barcodeModal").classList.add("hidden");}
+function makeCustomBarcode(){
+  const chars="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let code="SP-";
+  for(let i=0;i<3;i++){
+    if(i)code+="-";
+    for(let j=0;j<4;j++)code+=chars[Math.floor(Math.random()*chars.length)];
+  }
+  return code;
+}
 function openCreateBarcode(value=""){
   $("createBarcodeModal").classList.remove("hidden");
-  const fallback=`SP${Date.now().toString().slice(-10)}`;
+  const fallback=makeCustomBarcode();
   $("barcodeValue").value=String(value||"").trim()||fallback;
   renderGeneratedBarcode();
 }
@@ -299,6 +308,7 @@ $("barcodeManual").addEventListener("keydown",e=>{if(e.key==="Enter")handleScann
 $("closeCreateBarcode").onclick=closeCreateBarcode;
 $("createBarcodeModal").querySelector(".modal-backdrop").onclick=closeCreateBarcode;
 $("barcodeValue").addEventListener("input",renderGeneratedBarcode);
+$("generateCustomBarcode").onclick=()=>{$("barcodeValue").value=makeCustomBarcode();renderGeneratedBarcode();toast("Custom barcode created")};
 $("downloadBarcode").onclick=downloadGeneratedBarcode;
 $("useBarcodeValue").onclick=()=>{$("sku").value=$("barcodeValue").value.trim();closeCreateBarcode();toast("Barcode added to product")};
 ["searchInput","categoryFilter","statusFilter"].forEach(id=>$(id).addEventListener("input",renderTable));
